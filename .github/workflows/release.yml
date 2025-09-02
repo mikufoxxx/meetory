@@ -1,0 +1,147 @@
+name: Build and Release (Windows + Android)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      - name: Build Windows (Release)
+        run: flutter build windows --release
+
+      - name: Package Windows artifact (zip)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+          $release = "${{ github.workspace }}\\build\\windows\\x64\\runner\\Release"
+          $zip = "${{ github.workspace }}\\artifacts\\meetory-windows-x64.zip"
+          if (-Not (Test-Path $release)) { $release = "${{ github.workspace }}\\build\\windows\\runner\\Release" }
+          Compress-Archive -Path "$release\\*" -DestinationPath $zip -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meetory-windows-x64
+          path: artifacts/meetory-windows-x64.zip
+
+  android:
+    name: Build Android (Debug)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter Pub Get
+        run: flutter pub get
+
+      - name: Accept Android licenses
+        run: yes | flutter doctor --android-licenses
+
+      - name: Build Android (Debug APK)
+        run: flutter build apk --debug
+
+      - name: Rename APK
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk artifacts/meetory-android-debug.apk
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: meetory-android-debug
+          path: artifacts/meetory-android-debug.apk
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [windows, android]
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: meetory-windows-x64
+          path: ./dist
+
+      - name: Download Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: meetory-android-debug
+          path: ./dist
+
+      - name: Checkout repo for release notes
+        uses: actions/checkout@v4
+
+      - name: Prepare release notes
+        id: notes
+        shell: bash
+        run: |
+          echo "ref_name=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          NOTES_FILE=".github/releases/${GITHUB_REF_NAME}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            echo "notes_path=$NOTES_FILE" >> $GITHUB_OUTPUT
+            echo "Using release notes: $NOTES_FILE"
+          else
+            echo "notes_path=" >> $GITHUB_OUTPUT
+            echo "No release notes found at $NOTES_FILE; will auto-generate."
+          fi
+
+      - name: Create GitHub Release (with notes file)
+        if: ${{ steps.notes.outputs.notes_path != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/meetory-windows-x64.zip
+            dist/meetory-android-debug.apk
+          body_path: ${{ steps.notes.outputs.notes_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release (auto notes)
+        if: ${{ steps.notes.outputs.notes_path == '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/meetory-windows-x64.zip
+            dist/meetory-android-debug.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

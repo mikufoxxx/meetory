@@ -895,9 +895,8 @@ class UpdateInfo {
 }
 
 class UpdateService {
-  // TODO: 将下面两个常量替换为你的 GitHub 仓库信息
-  static const String owner = 'YOUR_GITHUB_OWNER';
-  static const String repo = 'Meetory';
+  static const String owner = 'mikufoxxx';
+  static const String repo = 'meetory';
 
   static Future<UpdateInfo?> fetchLatestRelease() async {
     final uri = Uri.parse('https://api.github.com/repos/$owner/$repo/releases/latest');
