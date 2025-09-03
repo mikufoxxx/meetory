@@ -39,7 +39,8 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() => _latestTag = latest?.tag);
 
       final currentTag = 'v${_currentVersion ?? '0.0.0'}';
-      final isNew = latest != null && UpdateService.compareTags(latest.tag, currentTag) > 0;
+      final isNew = latest != null &&
+          UpdateService.compareTags(latest.tag, currentTag) > 0;
 
       if (!mounted) return;
       await showDialog(
@@ -50,7 +51,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ? '当前版本 ${_currentVersion ?? '?'}，是否前往下载？\n\n仓库：${UpdateService.owner}/${UpdateService.repo}'
               : '当前版本 ${_currentVersion ?? '?'} 已是最新。\n\n仓库：${UpdateService.owner}/${UpdateService.repo}'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('关闭')),
             if (isNew)
               TextButton(
                 onPressed: () {
@@ -64,7 +67,8 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('检查更新失败：$e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('检查更新失败：$e')));
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -74,7 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.platformDefault);
     if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('无法打开链接')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('无法打开链接')));
     }
   }
 
@@ -83,9 +88,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 1000;
-        
+
         final appBar = AppBar(title: const Text('设置'));
-        
+
         final settingsContent = Card(
           margin: const EdgeInsets.all(16),
           child: Column(
@@ -101,9 +106,14 @@ class _SettingsPageState extends State<SettingsPage> {
               ListTile(
                 leading: const Icon(Icons.system_update_outlined),
                 title: const Text('检查更新'),
-                subtitle: Text(_latestTag == null ? '访问 GitHub Releases 获取最新版本' : '最新：$_latestTag'),
+                subtitle: Text(_latestTag == null
+                    ? '访问 GitHub Releases 获取最新版本'
+                    : '最新：$_latestTag'),
                 trailing: _checking
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                     : null,
                 onTap: _checking ? null : _checkUpdate,
               ),
@@ -116,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         );
-        
+
         if (isWide) {
           return Scaffold(
             appBar: appBar,
@@ -128,7 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           );
         }
-        
+
         return Scaffold(
           appBar: appBar,
           body: settingsContent,

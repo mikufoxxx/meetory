@@ -8,16 +8,17 @@ class FloatingRecordingWidget extends StatefulWidget {
   final MeetingConfig? meetingConfig;
   final VoidCallback? onTap;
   final VoidCallback? onClose;
-  
+
   const FloatingRecordingWidget({
     super.key,
     this.meetingConfig,
     this.onTap,
     this.onClose,
   });
-  
+
   @override
-  State<FloatingRecordingWidget> createState() => _FloatingRecordingWidgetState();
+  State<FloatingRecordingWidget> createState() =>
+      _FloatingRecordingWidgetState();
 }
 
 class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
@@ -27,14 +28,14 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
   late AnimationController _snapController;
   late Animation<Offset> _snapAnimation;
   Timer? _updateTimer;
-  
+
   // 拖拽相关状态
   Offset _position = const Offset(0, 0);
   bool _isDragging = false;
   bool _isSnapping = false;
   late Size _screenSize;
   late Size _widgetSize;
-  
+
   @override
   void initState() {
     super.initState();
@@ -50,7 +51,7 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
       curve: Curves.easeInOut,
     ));
     _pulseController.repeat(reverse: true);
-    
+
     // 初始化吸附动画控制器
     _snapController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -63,7 +64,7 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
       parent: _snapController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _snapAnimation.addListener(() {
       if (_isSnapping) {
         setState(() {
@@ -71,7 +72,7 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
         });
       }
     });
-    
+
     _snapController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         setState(() {
@@ -79,14 +80,14 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
         });
       }
     });
-    
+
     // 添加定时器来更新录音时长显示
     _updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {});
       }
     });
-    
+
     // 初始化屏幕尺寸和组件尺寸
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _screenSize = MediaQuery.of(context).size;
@@ -98,7 +99,7 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
       if (mounted) setState(() {});
     });
   }
-  
+
   @override
   void dispose() {
     _pulseController.dispose();
@@ -106,21 +107,21 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
     _updateTimer?.cancel();
     super.dispose();
   }
-  
+
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
     return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
   }
-  
+
   // 边缘吸附逻辑（带动画）
   void _snapToEdge() {
     if (_screenSize == Size.zero) return;
-    
+
     final double centerX = _position.dx + _widgetSize.width / 2;
     final double screenCenterX = _screenSize.width / 2;
-    
+
     double newX;
     if (centerX < screenCenterX) {
       // 吸附到左边
@@ -129,30 +130,30 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
       // 吸附到右边
       newX = _screenSize.width - _widgetSize.width - 16;
     }
-    
+
     // 确保Y坐标在安全区域内
     double newY = _position.dy;
     final double topPadding = MediaQuery.of(context).padding.top + 16;
     final double bottomPadding = MediaQuery.of(context).padding.bottom + 16;
-    
+
     if (newY < topPadding) {
       newY = topPadding;
     } else if (newY + _widgetSize.height > _screenSize.height - bottomPadding) {
       newY = _screenSize.height - _widgetSize.height - bottomPadding;
     }
-    
+
     final Offset targetPosition = Offset(newX, newY);
-    
+
     // 如果位置没有变化，不需要动画
     if ((_position - targetPosition).distance < 1.0) {
       return;
     }
-    
+
     // 开始吸附动画
     setState(() {
       _isSnapping = true;
     });
-    
+
     _snapAnimation = Tween<Offset>(
       begin: _position,
       end: targetPosition,
@@ -160,18 +161,18 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
       parent: _snapController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _snapController.reset();
     _snapController.forward();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AsrProvider>(builder: (context, asr, child) {
       if (!asr.running) {
         return const SizedBox.shrink();
       }
-      
+
       return Positioned(
         left: _position.dx,
         top: _position.dy,
@@ -185,13 +186,15 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
           onPanUpdate: (details) {
             setState(() {
               _position += details.delta;
-              
+
               // 限制在屏幕边界内
               _position = Offset(
                 _position.dx.clamp(0, _screenSize.width - _widgetSize.width),
                 _position.dy.clamp(
                   MediaQuery.of(context).padding.top,
-                  _screenSize.height - _widgetSize.height - MediaQuery.of(context).padding.bottom,
+                  _screenSize.height -
+                      _widgetSize.height -
+                      MediaQuery.of(context).padding.bottom,
                 ),
               );
             });
@@ -239,15 +242,20 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
                     Text(
                       widget.meetingConfig?.subject ?? '会议录音中',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.w500,
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                     Text(
                       _formatDuration(asr.recordingDuration),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer
+                                .withValues(alpha: 0.7),
+                          ),
                     ),
                   ],
                 ),
@@ -257,7 +265,10 @@ class _FloatingRecordingWidgetState extends State<FloatingRecordingWidget>
                   child: Container(
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -281,12 +292,13 @@ class FloatingRecordingOverlay {
   static MeetingConfig? _currentMeetingConfig;
   static BuildContext? _originalContext;
 
-  static void show(BuildContext context, {
+  static void show(
+    BuildContext context, {
     MeetingConfig? meetingConfig,
     VoidCallback? onTap,
   }) {
     hide();
-    
+
     _currentMeetingConfig = meetingConfig;
     _originalContext = context;
     _overlayEntry = OverlayEntry(
@@ -303,17 +315,17 @@ class FloatingRecordingOverlay {
         );
       },
     );
-    
+
     Overlay.of(context).insert(_overlayEntry!);
   }
-  
+
   static void hide() {
     _overlayEntry?.remove();
     _overlayEntry = null;
     _currentMeetingConfig = null;
     _originalContext = null;
   }
-  
+
   static bool get isShowing => _overlayEntry != null;
   static MeetingConfig? get currentMeetingConfig => _currentMeetingConfig;
 }

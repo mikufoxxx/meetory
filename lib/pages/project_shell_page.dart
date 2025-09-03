@@ -23,16 +23,16 @@ class _ProjectShellPageState extends State<ProjectShellPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 1000;
-        
+
         final appBar = AppBar(title: Text(widget.project.name));
-        
+
         final body = Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1200),
             child: pages[_index],
           ),
         );
-        
+
         if (isWide) {
           return Scaffold(
             appBar: appBar,
@@ -61,7 +61,7 @@ class _ProjectShellPageState extends State<ProjectShellPage> {
             ),
           );
         }
-        
+
         return Scaffold(
           appBar: appBar,
           body: body,
@@ -69,8 +69,14 @@ class _ProjectShellPageState extends State<ProjectShellPage> {
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: '会议历史'),
-              NavigationDestination(icon: Icon(Icons.library_books_outlined), selectedIcon: Icon(Icons.library_books), label: '文档/知识库'),
+              NavigationDestination(
+                  icon: Icon(Icons.history_outlined),
+                  selectedIcon: Icon(Icons.history),
+                  label: '会议历史'),
+              NavigationDestination(
+                  icon: Icon(Icons.library_books_outlined),
+                  selectedIcon: Icon(Icons.library_books),
+                  label: '文档/知识库'),
             ],
           ),
         );
@@ -90,8 +96,10 @@ class _MeetingCard extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => MeetingDetailPage(meeting: meeting),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                MeetingDetailPage(meeting: meeting),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(1.0, 0.0),
@@ -124,8 +132,8 @@ class _MeetingCard extends StatelessWidget {
                     child: Text(
                       meeting.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                            fontWeight: FontWeight.w600,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -150,8 +158,8 @@ class _MeetingCard extends StatelessWidget {
                     child: Text(
                       '${meeting.time.year}-${meeting.time.month.toString().padLeft(2, '0')}-${meeting.time.day.toString().padLeft(2, '0')} ${meeting.time.hour.toString().padLeft(2, '0')}:${meeting.time.minute.toString().padLeft(2, '0')}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                     ),
                   ),
                 ],
@@ -163,7 +171,8 @@ class _MeetingCard extends StatelessWidget {
                   runSpacing: 4,
                   children: meeting.tags.take(2).map<Widget>((tag) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(8),
@@ -171,9 +180,11 @@ class _MeetingCard extends StatelessWidget {
                       child: Text(
                         tag,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSecondaryContainer,
-                          fontSize: 10,
-                        ),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                              fontSize: 10,
+                            ),
                       ),
                     );
                   }).toList(),
@@ -194,7 +205,7 @@ class ProjectHistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meetings = project.meetings;
-    
+
     if (meetings.isEmpty) {
       return Center(
         child: Padding(
@@ -203,7 +214,8 @@ class ProjectHistoryPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.meeting_room_outlined, size: 72, color: Theme.of(context).colorScheme.primary),
+              Icon(Icons.meeting_room_outlined,
+                  size: 72, color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 16),
               Text('暂无会议记录', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
@@ -213,11 +225,11 @@ class ProjectHistoryPage extends StatelessWidget {
         ),
       );
     }
-    
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 800;
-        
+
         if (isWide) {
           // 平板/桌面版本：使用网格布局
           return GridView.builder(
@@ -235,7 +247,7 @@ class ProjectHistoryPage extends StatelessWidget {
             },
           );
         }
-        
+
         // 手机版本：使用列表布局
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -265,7 +277,8 @@ class ProjectKnowledgePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.auto_stories, size: 72, color: Theme.of(context).colorScheme.primary),
+            Icon(Icons.auto_stories,
+                size: 72, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 16),
             Text('项目知识库（占位）', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),

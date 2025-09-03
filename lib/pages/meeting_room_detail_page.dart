@@ -13,15 +13,15 @@ class MeetingRoomDetailPage extends StatefulWidget {
   final String host;
   final int port;
   final MeetingConfig? config;
-  
+
   const MeetingRoomDetailPage({
-    super.key, 
-    required this.roomName, 
-    required this.host, 
+    super.key,
+    required this.roomName,
+    required this.host,
     required this.port,
     this.config,
   });
-  
+
   @override
   State<MeetingRoomDetailPage> createState() => _MeetingRoomDetailPageState();
 }
@@ -34,7 +34,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
   DateTime? _meetingStartTime;
   BonsoirBroadcast? _broadcast;
   static const String _serviceType = '_wonderful-service._tcp';
-  
+
   @override
   void initState() {
     super.initState();
@@ -48,18 +48,18 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   // 启动广播服务
   Future<void> _startBroadcast() async {
     if (kIsWeb) return; // Web平台不支持Bonjour
-    
+
     try {
       final service = BonsoirService(
         name: widget.roomName,
         type: _serviceType,
         port: widget.port,
       );
-      
+
       _broadcast = BonsoirBroadcast(service: service);
       await _broadcast!.ready;
       await _broadcast!.start();
@@ -67,7 +67,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       // 静默处理广播启动错误
     }
   }
-  
+
   // 停止广播服务
   Future<void> _stopBroadcast() async {
     try {
@@ -75,15 +75,15 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
     } catch (_) {}
     _broadcast = null;
   }
-  
+
   // 保存会议记录
   Future<void> _saveMeetingRecord() async {
     if (_meetingStartTime == null) return;
-    
+
     // 获取录音文件路径
     final asrProvider = Provider.of<AsrProvider>(context, listen: false);
     final audioUrl = asrProvider.currentRecordingPath ?? '';
-    
+
     final meeting = Meeting(
       id: _meetingId,
       projectId: widget.config?.project ?? '未分类',
@@ -95,7 +95,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       config: widget.config,
       speakerMapping: _speakerMapping.isNotEmpty ? _speakerMapping : null,
     );
-    
+
     try {
       await MeetingService.instance.saveMeeting(meeting);
     } catch (e) {
@@ -106,23 +106,25 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       }
     }
   }
-  
+
   // 保存说话人映射
   Future<void> _saveSpeakerMapping() async {
     if (_speakerMapping.isNotEmpty) {
       try {
-        await MeetingService.instance.updateSpeakerMapping(_meetingId, _speakerMapping);
+        await MeetingService.instance
+            .updateSpeakerMapping(_meetingId, _speakerMapping);
       } catch (e) {
         // 静默处理错误，避免影响用户体验
       }
     }
   }
-  
+
   // 保存消息更新
   Future<void> _saveMessages() async {
     if (_messages.isNotEmpty) {
       try {
-        await MeetingService.instance.updateMeetingMessages(_meetingId, _messages);
+        await MeetingService.instance
+            .updateMeetingMessages(_meetingId, _messages);
       } catch (e) {
         // 静默处理错误，避免影响用户体验
       }
@@ -136,7 +138,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       );
       return;
     }
-    
+
     showDialog(
       context: context,
       builder: (context) => _SpeakerMappingDialog(
@@ -152,18 +154,19 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       ),
     );
   }
-  
+
   String _getSpeakerDisplayName(String speakerId) {
     final userId = _speakerMapping[speakerId];
     if (userId != null && widget.config != null) {
-      final user = widget.config!.participants.where((u) => u.id == userId).firstOrNull;
+      final user =
+          widget.config!.participants.where((u) => u.id == userId).firstOrNull;
       if (user != null) {
         return user.name;
       }
     }
     return speakerId;
   }
-  
+
   Color _getSpeakerColor(String speakerId) {
     final colors = [
       Colors.blue,
@@ -178,7 +181,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
     final hash = speakerId.hashCode;
     return colors[hash.abs() % colors.length];
   }
-  
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -190,11 +193,11 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       }
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final asr = context.watch<AsrProvider>();
-    
+
     // 监听ASR输出变化，更新消息列表
     if (asr.lines.isNotEmpty) {
       // 这里应该从ASR Provider获取带说话人信息的消息
@@ -222,7 +225,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
           ));
         }
       }
-      
+
       if (newMessages.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           setState(() {
@@ -234,414 +237,466 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
         });
       }
     }
-    
+
     // ignore: deprecated_member_use
     return WillPopScope(
-       onWillPop: () async {
-         // 返回按钮不结束会议，如果正在录音则显示浮动窗口
-         final asr = context.read<AsrProvider>();
-         if (asr.running) {
-           FloatingRecordingOverlay.show(
-             context,
-             meetingConfig: widget.config,
-             onTap: () {
-               FloatingRecordingOverlay.hide();
-               Navigator.of(context).push(
-                 PageRouteBuilder(
-                   pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
-                     roomName: widget.roomName,
-                     host: widget.host,
-                     port: widget.port,
-                     config: widget.config,
-                   ),
-                   transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                     return FadeTransition(
-                       opacity: animation,
-                       child: child,
-                     );
-                   },
-                   transitionDuration: const Duration(milliseconds: 300),
-                 ),
-               );
-             },
-           );
-         }
-         return true;
-       },
+      onWillPop: () async {
+        // 返回按钮不结束会议，如果正在录音则显示浮动窗口
+        final asr = context.read<AsrProvider>();
+        if (asr.running) {
+          FloatingRecordingOverlay.show(
+            context,
+            meetingConfig: widget.config,
+            onTap: () {
+              FloatingRecordingOverlay.hide();
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      MeetingRoomDetailPage(
+                    roomName: widget.roomName,
+                    host: widget.host,
+                    port: widget.port,
+                    config: widget.config,
+                  ),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
+                ),
+              );
+            },
+          );
+        }
+        return true;
+      },
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
-             icon: const Icon(Icons.arrow_back),
-             onPressed: () {
-               // 返回按钮不结束会议，如果正在录音则显示浮动窗口
-               final asr = context.read<AsrProvider>();
-               if (asr.running) {
-                 FloatingRecordingOverlay.show(
-                   context,
-                   meetingConfig: widget.config,
-                   onTap: () {
-                     FloatingRecordingOverlay.hide();
-                     // 使用全局导航器来避免context失效问题
-                     final navigatorState = Navigator.of(context, rootNavigator: true);
-                     navigatorState.push(
-                       PageRouteBuilder(
-                         pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
-                           roomName: widget.roomName,
-                           host: widget.host,
-                           port: widget.port,
-                           config: widget.config,
-                         ),
-                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                           return FadeTransition(
-                             opacity: animation,
-                             child: child,
-                           );
-                         },
-                         transitionDuration: const Duration(milliseconds: 300),
-                       ),
-                     );
-                   },
-                 );
-               }
-               Navigator.of(context).pop();
-             },
-           ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.roomName),
-            if (widget.config != null)
-              Text(
-                widget.config!.subject,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-          ],
-        ),
-        actions: [
-          if (widget.config != null)
-            IconButton(
-              onPressed: _showSpeakerMappingDialog,
-              icon: const Icon(Icons.people),
-              tooltip: '说话人映射',
-            ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'info':
-                  _showMeetingInfo();
-                  break;
-                case 'export':
-                  _exportTranscript();
-                  break;
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              // 返回按钮不结束会议，如果正在录音则显示浮动窗口
+              final asr = context.read<AsrProvider>();
+              if (asr.running) {
+                FloatingRecordingOverlay.show(
+                  context,
+                  meetingConfig: widget.config,
+                  onTap: () {
+                    FloatingRecordingOverlay.hide();
+                    // 使用全局导航器来避免context失效问题
+                    final navigatorState =
+                        Navigator.of(context, rootNavigator: true);
+                    navigatorState.push(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            MeetingRoomDetailPage(
+                          roomName: widget.roomName,
+                          host: widget.host,
+                          port: widget.port,
+                          config: widget.config,
+                        ),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        transitionDuration: const Duration(milliseconds: 300),
+                      ),
+                    );
+                  },
+                );
               }
+              Navigator.of(context).pop();
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'info',
-                child: ListTile(
-                  leading: Icon(Icons.info),
-                  title: Text('会议信息'),
-                  contentPadding: EdgeInsets.zero,
+          ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(widget.roomName),
+              if (widget.config != null)
+                Text(
+                  widget.config!.subject,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'export',
-                child: ListTile(
-                  leading: Icon(Icons.download),
-                  title: Text('导出记录'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
             ],
           ),
-        ],
-      ),
-      floatingActionButton: Consumer<AsrProvider>(builder: (context, asr, _) {
-        if (!asr.running) return const SizedBox.shrink();
-        return FloatingActionButton.extended(
-          onPressed: () async {
-            // 显示确认对话框
-            final shouldEnd = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('结束会议'),
-                content: const Text('确定要结束当前会议吗？会议记录将被保存。'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('取消'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('结束会议'),
-                  ),
-                ],
+          actions: [
+            if (widget.config != null)
+              IconButton(
+                onPressed: _showSpeakerMappingDialog,
+                icon: const Icon(Icons.people),
+                tooltip: '说话人映射',
               ),
-            );
-            
-            if (shouldEnd == true) {
-              // 停止录音
-              // ignore: use_build_context_synchronously
-              context.read<AsrProvider>().stop();
-              setState(() {});
-              // 保存最终的会议记录
-              await _saveMeetingRecord();
-              // 隐藏悬浮窗口（如果存在）
-              FloatingRecordingOverlay.hide();
-              // 返回上一页
-              if (mounted) {
-                // ignore: use_build_context_synchronously
-                Navigator.of(context).pop();
-              }
-            }
-          },
-          backgroundColor: Theme.of(context).colorScheme.error,
-          foregroundColor: Theme.of(context).colorScheme.onError,
-          icon: const Icon(Icons.stop),
-          label: const Text('结束会议'),
-        );
-      }),
-      body: Column(
-        children: [
-          // 控制面板
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                ),
-              ),
-            ),
-            child: Column(
-              children: [
-                if (asr.loadingModel)
-                  const LinearProgressIndicator(minHeight: 3),
-                if (asr.loadingModel) const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.wifi_tethering, size: 18),
-                    const SizedBox(width: 6),
-                    Text('${widget.host}:${widget.port}', style: Theme.of(context).textTheme.bodyMedium),
-                    const Spacer(),
-                    if (widget.config != null) ...[
-                      Chip(
-                        label: Text('${widget.config!.participants.length}人'),
-                        avatar: const Icon(Icons.people, size: 16),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('连接服务器（占位）')),
-                        );
-                      },
-                      icon: const Icon(Icons.link),
-                      label: const Text('连接'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    FilledButton.icon(
-                      onPressed: (asr.running || asr.loadingModel)
-                          ? null
-                          : () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final asrProvider = context.read<AsrProvider>();
-
-                              if (kIsWeb) {
-                                messenger.showSnackBar(
-                                  const SnackBar(content: Text('当前为 Web 端，暂不支持本地 ASR（sherpa_onnx）。请在 Windows/macOS/Android/iOS 运行。')),
-                                );
-                                return;
-                              }
-                              
-                              // 设置说话人数量限制
-                              if (widget.config != null) {
-                                asrProvider.setMaxSpeakers(widget.config!.maxParticipants);
-                                asrProvider.resetSpeakers(); // 重置说话人聚类
-                              }
-                              
-                              // 预加载模型（带进度与错误状态）
-                              final ok = await asrProvider.loadDefaultModelWithProgress();
-                              if (!ok && asrProvider.lastError != null) {
-                                messenger.showSnackBar(
-                                  SnackBar(content: Text('模型加载失败：${asrProvider.lastError}')),
-                                );
-                                return;
-                              }
-                              
-                              // 记录会议开始时间并开始录音
-                              setState(() {
-                                _meetingStartTime = DateTime.now();
-                              });
-                              
-                              // 开始录音到文件
-                              final projectName = widget.config?.project ?? '未分类';
-                              await asrProvider.startRecordingToFile(projectName, _meetingId);
-                              
-                              await asrProvider.start();
-                              
-                              // 显示悬浮录音窗口
-                              if (widget.config != null) {
-                                FloatingRecordingOverlay.show(
-                                  // ignore: use_build_context_synchronously
-                                  context,
-                                  meetingConfig: widget.config,
-                                  onTap: () {
-                                    // 点击悬浮窗口时返回到会议详情页面
-                                    FloatingRecordingOverlay.hide();
-                                  },
-                                );
-                              }
-                              
-                              // 创建初始会议记录
-                              await _saveMeetingRecord();
-                            },
-                      icon: asr.loadingModel
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.mic),
-                      label: Text(asr.loadingModel ? '初始化模型…' : '开始录音'),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: asr.running ? () async {
-                        final asrProvider = context.read<AsrProvider>();
-                        asrProvider.stop();
-                        // 停止录音到文件
-                        await asrProvider.stopRecordingToFile();
-                        setState(() {
-                        });
-                        // 保存最终的会议记录
-                        await _saveMeetingRecord();
-                      } : null,
-                      icon: const Icon(Icons.stop),
-                      label: const Text('停止'),
-                    ),
-                  ],
-                ),
-                if (asr.lastError != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '错误：${asr.lastError}',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                switch (value) {
+                  case 'info':
+                    _showMeetingInfo();
+                    break;
+                  case 'export':
+                    _exportTranscript();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'info',
+                  child: ListTile(
+                    leading: Icon(Icons.info),
+                    title: Text('会议信息'),
+                    contentPadding: EdgeInsets.zero,
                   ),
-                ],
+                ),
+                const PopupMenuItem(
+                  value: 'export',
+                  child: ListTile(
+                    leading: Icon(Icons.download),
+                    title: Text('导出记录'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
               ],
             ),
-          ),
-          
-          // 聊天界面
-          Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.mic_none,
-                          size: 64,
-                          color: Theme.of(context).colorScheme.outline,
+          ],
+        ),
+        floatingActionButton: Consumer<AsrProvider>(builder: (context, asr, _) {
+          if (!asr.running) return const SizedBox.shrink();
+          return FloatingActionButton.extended(
+            onPressed: () async {
+              // 显示确认对话框
+              final shouldEnd = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('结束会议'),
+                  content: const Text('确定要结束当前会议吗？会议记录将被保存。'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text('取消'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('结束会议'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldEnd == true) {
+                // 停止录音
+                // ignore: use_build_context_synchronously
+                context.read<AsrProvider>().stop();
+                setState(() {});
+                // 保存最终的会议记录
+                await _saveMeetingRecord();
+                // 隐藏悬浮窗口（如果存在）
+                FloatingRecordingOverlay.hide();
+                // 返回上一页
+                if (mounted) {
+                  // ignore: use_build_context_synchronously
+                  Navigator.of(context).pop();
+                }
+              }
+            },
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+            icon: const Icon(Icons.stop),
+            label: const Text('结束会议'),
+          );
+        }),
+        body: Column(
+          children: [
+            // 控制面板
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.3),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.2),
+                  ),
+                ),
+              ),
+              child: Column(
+                children: [
+                  if (asr.loadingModel)
+                    const LinearProgressIndicator(minHeight: 3),
+                  if (asr.loadingModel) const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.wifi_tethering, size: 18),
+                      const SizedBox(width: 6),
+                      Text('${widget.host}:${widget.port}',
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      const Spacer(),
+                      if (widget.config != null) ...[
+                        Chip(
+                          label: Text('${widget.config!.participants.length}人'),
+                          avatar: const Icon(Icons.people, size: 16),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '点击开始录音开始会议',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        const SizedBox(width: 8),
+                      ],
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('连接服务器（占位）')),
+                          );
+                        },
+                        icon: const Icon(Icons.link),
+                        label: const Text('连接'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      FilledButton.icon(
+                        onPressed: (asr.running || asr.loadingModel)
+                            ? null
+                            : () async {
+                                final messenger = ScaffoldMessenger.of(context);
+                                final asrProvider = context.read<AsrProvider>();
+
+                                if (kIsWeb) {
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            '当前为 Web 端，暂不支持本地 ASR（sherpa_onnx）。请在 Windows/macOS/Android/iOS 运行。')),
+                                  );
+                                  return;
+                                }
+
+                                // 设置说话人数量限制
+                                if (widget.config != null) {
+                                  asrProvider.setMaxSpeakers(
+                                      widget.config!.maxParticipants);
+                                  asrProvider.resetSpeakers(); // 重置说话人聚类
+                                }
+
+                                // 预加载模型（带进度与错误状态）
+                                final ok = await asrProvider
+                                    .loadDefaultModelWithProgress();
+                                if (!ok && asrProvider.lastError != null) {
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            '模型加载失败：${asrProvider.lastError}')),
+                                  );
+                                  return;
+                                }
+
+                                // 记录会议开始时间并开始录音
+                                setState(() {
+                                  _meetingStartTime = DateTime.now();
+                                });
+
+                                // 开始录音到文件
+                                final projectName =
+                                    widget.config?.project ?? '未分类';
+                                await asrProvider.startRecordingToFile(
+                                    projectName, _meetingId);
+
+                                await asrProvider.start();
+
+                                // 显示悬浮录音窗口
+                                if (widget.config != null) {
+                                  FloatingRecordingOverlay.show(
+                                    // ignore: use_build_context_synchronously
+                                    context,
+                                    meetingConfig: widget.config,
+                                    onTap: () {
+                                      // 点击悬浮窗口时返回到会议详情页面
+                                      FloatingRecordingOverlay.hide();
+                                    },
+                                  );
+                                }
+
+                                // 创建初始会议记录
+                                await _saveMeetingRecord();
+                              },
+                        icon: asr.loadingModel
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.mic),
+                        label: Text(asr.loadingModel ? '初始化模型…' : '开始录音'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: asr.running
+                            ? () async {
+                                final asrProvider = context.read<AsrProvider>();
+                                asrProvider.stop();
+                                // 停止录音到文件
+                                await asrProvider.stopRecordingToFile();
+                                setState(() {});
+                                // 保存最终的会议记录
+                                await _saveMeetingRecord();
+                              }
+                            : null,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('停止'),
+                      ),
+                    ],
+                  ),
+                  if (asr.lastError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '错误：${asr.lastError}',
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // 聊天界面
+            Expanded(
+              child: _messages.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.mic_none,
+                            size: 64,
                             color: Theme.of(context).colorScheme.outline,
                           ),
-                        ),
-                        if (widget.config != null) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 16),
                           Text(
-                            '已配置 ${widget.config!.participants.length} 位参与者',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      final speakerColor = _getSpeakerColor(message.speaker);
-                      final displayName = _getSpeakerDisplayName(message.speaker);
-                      
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: speakerColor.withValues(alpha: 0.2),
-                              child: Text(
-                                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                                style: TextStyle(
-                                  color: speakerColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                            '点击开始录音开始会议',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        displayName,
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: speakerColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        DateTime.now().toString().substring(11, 19), // 临时时间戳
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.outline,
-                                        ),
-                                      ),
-                                    ],
+                          ),
+                          if (widget.config != null) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              '已配置 ${widget.config!.participants.length} 位参与者',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.outline,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      message.text,
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _messages.length,
+                      itemBuilder: (context, index) {
+                        final message = _messages[index];
+                        final speakerColor = _getSpeakerColor(message.speaker);
+                        final displayName =
+                            _getSpeakerDisplayName(message.speaker);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor:
+                                    speakerColor.withValues(alpha: 0.2),
+                                child: Text(
+                                  displayName.isNotEmpty
+                                      ? displayName[0].toUpperCase()
+                                      : '?',
+                                  style: TextStyle(
+                                    color: speakerColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          displayName,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: speakerColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          DateTime.now()
+                                              .toString()
+                                              .substring(11, 19), // 临时时间戳
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .outline,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        message.text,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
-  
+
   void _showMeetingInfo() {
     showDialog(
       context: context,
@@ -657,8 +712,8 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                     Text(
                       '会议配置详情',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                     ),
                     const SizedBox(height: 16),
                     Card(
@@ -668,7 +723,8 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                           children: [
                             _InfoRow('主题', widget.config!.subject),
                             _InfoRow('项目', widget.config!.project),
-                            _InfoRow('最大人数', '${widget.config!.maxParticipants}人'),
+                            _InfoRow(
+                                '最大人数', '${widget.config!.maxParticipants}人'),
                             if (widget.config!.tags.isNotEmpty)
                               _InfoRow('标签', widget.config!.tags.join(', ')),
                           ],
@@ -688,18 +744,23 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                               const SizedBox(height: 8),
-                              ...widget.config!.participants.map((user) => 
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                              ...widget.config!.participants.map(
+                                (user) => Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: Row(
                                     children: [
                                       CircleAvatar(
                                         radius: 12,
-                                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primaryContainer,
                                         child: Text(
                                           user.name[0].toUpperCase(),
                                           style: TextStyle(
-                                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onPrimaryContainer,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -708,7 +769,9 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                                       const SizedBox(width: 12),
                                       Text(
                                         user.name,
-                                        style: Theme.of(context).textTheme.bodyMedium,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium,
                                       ),
                                     ],
                                   ),
@@ -732,7 +795,7 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       ),
     );
   }
-  
+
   void _exportTranscript() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('导出功能开发中...')),
@@ -743,9 +806,9 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  
+
   const _InfoRow(this.label, this.value);
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -758,8 +821,8 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               '$label:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
           ),
           Expanded(
@@ -778,34 +841,35 @@ class _SpeakerMappingDialog extends StatefulWidget {
   final MeetingConfig config;
   final Map<String, String> currentMapping;
   final Function(Map<String, String>) onMappingChanged;
-  
+
   const _SpeakerMappingDialog({
     required this.config,
     required this.currentMapping,
     required this.onMappingChanged,
   });
-  
+
   @override
   State<_SpeakerMappingDialog> createState() => _SpeakerMappingDialogState();
 }
 
 class _SpeakerMappingDialogState extends State<_SpeakerMappingDialog> {
   late Map<String, String> _mapping;
-  
+
   @override
   void initState() {
     super.initState();
     _mapping = Map.from(widget.currentMapping);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // 获取已检测到的说话人
     final asr = Provider.of<AsrProvider>(context, listen: false);
-    final detectedSpeakers = asr.detectedSpeakers.isNotEmpty 
-        ? asr.detectedSpeakers 
-        : List.generate(widget.config.participants.length, (index) => 'S${index + 1}'); // 根据实际参与者数量生成说话人选项
-    
+    final detectedSpeakers = asr.detectedSpeakers.isNotEmpty
+        ? asr.detectedSpeakers
+        : List.generate(widget.config.participants.length,
+            (index) => 'S${index + 1}'); // 根据实际参与者数量生成说话人选项
+
     return AlertDialog(
       title: const Text('说话人映射'),
       content: SizedBox(
@@ -816,8 +880,8 @@ class _SpeakerMappingDialogState extends State<_SpeakerMappingDialog> {
             Text(
               '将检测到的说话人与实际参与者进行对应',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
             ),
             const SizedBox(height: 16),
             ...detectedSpeakers.map((speakerId) {
@@ -826,7 +890,8 @@ class _SpeakerMappingDialogState extends State<_SpeakerMappingDialog> {
               return Card(
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.primaryContainer,
                     child: Text(
                       speakerId,
                       style: TextStyle(

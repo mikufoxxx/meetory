@@ -19,24 +19,24 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
   final _subjectController = TextEditingController();
   final _tagController = TextEditingController();
   final _maxParticipantsController = TextEditingController(text: '4');
-  
+
   final _projectController = TextEditingController();
-  
+
   final List<String> _tags = [];
   List<User> _availableUsers = [];
   List<User> _selectedUsers = [];
   bool _loadingUsers = false;
-  
+
   List<String> _availableProjects = [];
   bool _loadingProjects = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadUsers();
     _loadProjects();
   }
-  
+
   @override
   void dispose() {
     _subjectController.dispose();
@@ -45,7 +45,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
     _projectController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadUsers() async {
     setState(() => _loadingUsers = true);
     try {
@@ -63,7 +63,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       }
     }
   }
-  
+
   Future<void> _loadProjects() async {
     setState(() => _loadingProjects = true);
     try {
@@ -81,7 +81,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       }
     }
   }
-  
+
   void _addTag() {
     final tag = _tagController.text.trim();
     if (tag.isNotEmpty && !_tags.contains(tag)) {
@@ -91,13 +91,13 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       });
     }
   }
-  
+
   void _removeTag(String tag) {
     setState(() {
       _tags.remove(tag);
     });
   }
-  
+
   void _showUserSelectionDialog() async {
     final result = await showDialog<List<User>>(
       context: context,
@@ -107,17 +107,17 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
         maxParticipants: int.tryParse(_maxParticipantsController.text) ?? 4,
       ),
     );
-    
+
     if (result != null) {
       setState(() {
         _selectedUsers = result;
       });
     }
   }
-  
+
   void _createMeetingRoom() {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final maxParticipants = int.tryParse(_maxParticipantsController.text) ?? 4;
     if (_selectedUsers.length > maxParticipants) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +125,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       );
       return;
     }
-    
+
     final config = MeetingConfig(
       subject: _subjectController.text.trim(),
       tags: _tags,
@@ -133,13 +133,15 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       maxParticipants: maxParticipants,
       participants: _selectedUsers,
     );
-    
+
     // 生成会议室名称
-    final roomName = 'Meetory #${DateTime.now().millisecondsSinceEpoch % 10000}';
-    
+    final roomName =
+        'Meetory #${DateTime.now().millisecondsSinceEpoch % 10000}';
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MeetingRoomDetailPage(
           roomName: roomName,
           host: '127.0.0.1',
           port: 3030,
@@ -161,7 +163,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -170,24 +172,28 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1.0, 0.0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      )),
-                      child: child,
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 300),
-                ),
-              ).then((_) => _loadUsers());
+              Navigator.of(context)
+                  .push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const UserManagementPage(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
+                  )
+                  .then((_) => _loadUsers());
             },
             icon: const Icon(Icons.people),
             tooltip: '用户管理',
@@ -228,9 +234,9 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 项目名称
             Card(
               child: Padding(
@@ -246,16 +252,19 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                     _loadingProjects
                         ? const Center(child: CircularProgressIndicator())
                         : DropdownButtonFormField<String>(
-                            value: _projectController.text.isEmpty ? null : _projectController.text,
+                            value: _projectController.text.isEmpty
+                                ? null
+                                : _projectController.text,
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
                               hintText: '选择或输入项目名称',
                             ),
                             items: [
-                              ..._availableProjects.map((project) => DropdownMenuItem(
-                                value: project,
-                                child: Text(project),
-                              )),
+                              ..._availableProjects
+                                  .map((project) => DropdownMenuItem(
+                                        value: project,
+                                        child: Text(project),
+                                      )),
                               const DropdownMenuItem(
                                 value: '__custom__',
                                 child: Text('+ 输入新项目名称'),
@@ -281,9 +290,9 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 标签
             Card(
               child: Padding(
@@ -333,9 +342,9 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 最大人数
             Card(
               child: Padding(
@@ -374,9 +383,9 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 参与者选择
             Card(
               child: Padding(
@@ -393,9 +402,12 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                         const Spacer(),
                         Text(
                           '${_selectedUsers.length}/${_maxParticipantsController.text}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                         ),
                       ],
                     ),
@@ -407,31 +419,40 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                         children: [
                           Text(
                             '暂无可选用户',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
                           ),
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                PageRouteBuilder(
-                                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
-                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                    return SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(1.0, 0.0),
-                                        end: Offset.zero,
-                                      ).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOutCubic,
-                                      )),
-                                      child: child,
-                                    );
-                                  },
-                                  transitionDuration: const Duration(milliseconds: 300),
-                                ),
-                              ).then((_) => _loadUsers());
+                              Navigator.of(context)
+                                  .push(
+                                    PageRouteBuilder(
+                                      pageBuilder: (context, animation,
+                                              secondaryAnimation) =>
+                                          const UserManagementPage(),
+                                      transitionsBuilder: (context, animation,
+                                          secondaryAnimation, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(1.0, 0.0),
+                                            end: Offset.zero,
+                                          ).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeOutCubic,
+                                          )),
+                                          child: child,
+                                        );
+                                      },
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                    ),
+                                  )
+                                  .then((_) => _loadUsers());
                             },
                             icon: const Icon(Icons.person_add),
                             label: const Text('添加用户'),
@@ -451,16 +472,24 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                             ..._selectedUsers.map((user) {
                               return ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
                                   child: Text(
-                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                    user.name.isNotEmpty
+                                        ? user.name[0].toUpperCase()
+                                        : '?',
                                     style: TextStyle(
-                                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimaryContainer,
                                     ),
                                   ),
                                 ),
                                 title: Text(user.name),
-                                subtitle: user.email != null ? Text(user.email!) : null,
+                                subtitle: user.email != null
+                                    ? Text(user.email!)
+                                    : null,
                                 trailing: IconButton(
                                   onPressed: () {
                                     setState(() {
@@ -479,9 +508,9 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // 创建按钮
             FilledButton(
               onPressed: _createMeetingRoom,
@@ -498,7 +527,7 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
 
   void _showCustomProjectDialog() {
     final customProjectController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -541,13 +570,13 @@ class _UserSelectionDialog extends StatefulWidget {
   final List<User> availableUsers;
   final List<User> selectedUsers;
   final int maxParticipants;
-  
+
   const _UserSelectionDialog({
     required this.availableUsers,
     required this.selectedUsers,
     required this.maxParticipants,
   });
-  
+
   @override
   State<_UserSelectionDialog> createState() => _UserSelectionDialogState();
 }
@@ -556,27 +585,29 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
   late List<User> _selectedUsers;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  
+
   @override
   void initState() {
     super.initState();
     _selectedUsers = List.from(widget.selectedUsers);
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
-  
+
   List<User> get _filteredUsers {
     if (_searchQuery.isEmpty) return widget.availableUsers;
-    return widget.availableUsers.where((user) => 
-      user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      (user.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
-    ).toList();
+    return widget.availableUsers
+        .where((user) =>
+            user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            (user.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+                false))
+        .toList();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -604,15 +635,18 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                 itemBuilder: (context, index) {
                   final user = _filteredUsers[index];
                   final isSelected = _selectedUsers.contains(user);
-                  final canSelect = isSelected || _selectedUsers.length < widget.maxParticipants;
-                  
+                  final canSelect = isSelected ||
+                      _selectedUsers.length < widget.maxParticipants;
+
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
                       child: Text(
                         user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -620,25 +654,29 @@ class _UserSelectionDialogState extends State<_UserSelectionDialog> {
                     subtitle: user.email != null ? Text(user.email!) : null,
                     trailing: Checkbox(
                       value: isSelected,
-                      onChanged: canSelect ? (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedUsers.add(user);
-                          } else {
-                            _selectedUsers.remove(user);
-                          }
-                        });
-                      } : null,
+                      onChanged: canSelect
+                          ? (value) {
+                              setState(() {
+                                if (value == true) {
+                                  _selectedUsers.add(user);
+                                } else {
+                                  _selectedUsers.remove(user);
+                                }
+                              });
+                            }
+                          : null,
                     ),
-                    onTap: canSelect ? () {
-                      setState(() {
-                        if (isSelected) {
-                          _selectedUsers.remove(user);
-                        } else {
-                          _selectedUsers.add(user);
-                        }
-                      });
-                    } : null,
+                    onTap: canSelect
+                        ? () {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedUsers.remove(user);
+                              } else {
+                                _selectedUsers.add(user);
+                              }
+                            });
+                          }
+                        : null,
                   );
                 },
               ),

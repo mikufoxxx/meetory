@@ -26,7 +26,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (snapshot.hasError) {
             return Center(
               child: Column(
@@ -44,9 +44,9 @@ class _ProjectsPageState extends State<ProjectsPage> {
               ),
             );
           }
-          
+
           final projects = snapshot.data ?? [];
-          
+
           if (projects.isEmpty) {
             return const Center(
               child: Column(
@@ -61,15 +61,16 @@ class _ProjectsPageState extends State<ProjectsPage> {
               ),
             );
           }
-          
+
           final isWide = MediaQuery.sizeOf(context).width >= 800;
           final grid = isWide;
-          
+
           return Padding(
             padding: const EdgeInsets.all(16),
             child: grid
                 ? GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
@@ -97,10 +98,12 @@ class _ProjectsPageState extends State<ProjectsPage> {
 }
 
 // 显示编辑项目对话框
-Future<void> _showEditProjectDialog(BuildContext context, Project project, VoidCallback onProjectUpdated) async {
+Future<void> _showEditProjectDialog(BuildContext context, Project project,
+    VoidCallback onProjectUpdated) async {
   final nameController = TextEditingController(text: project.name);
-  final descriptionController = TextEditingController(text: project.description);
-  
+  final descriptionController =
+      TextEditingController(text: project.description);
+
   return showDialog<void>(
     context: context,
     builder: (BuildContext context) {
@@ -139,21 +142,21 @@ Future<void> _showEditProjectDialog(BuildContext context, Project project, VoidC
             onPressed: () async {
               final newName = nameController.text.trim();
               final newDescription = descriptionController.text.trim();
-              
+
               if (newName.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('项目名称不能为空')),
                 );
                 return;
               }
-              
+
               try {
                 await MeetingService.instance.updateProject(
                   project.name,
                   newName,
                   newDescription,
                 );
-                
+
                 if (context.mounted) {
                   Navigator.of(context).pop();
                   onProjectUpdated();
@@ -189,8 +192,10 @@ class _ProjectTile extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => ProjectShellPage(project: project),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ProjectShellPage(project: project),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(1.0, 0.0),
@@ -218,8 +223,8 @@ class _ProjectTile extends StatelessWidget {
                     Text(
                       project.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -239,9 +244,12 @@ class _ProjectTile extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${project.meetings.length} 个会议',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ],
                     ),
@@ -253,7 +261,8 @@ class _ProjectTile extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit),
-                    onPressed: () => _showEditProjectDialog(context, project, onProjectUpdated),
+                    onPressed: () => _showEditProjectDialog(
+                        context, project, onProjectUpdated),
                     tooltip: '编辑项目',
                   ),
                   const Icon(Icons.chevron_right),
@@ -279,8 +288,10 @@ class _ProjectCard extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.of(context).push(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => ProjectShellPage(project: project),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ProjectShellPage(project: project),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
               return SlideTransition(
                 position: Tween<Offset>(
                   begin: const Offset(1.0, 0.0),
@@ -306,11 +317,13 @@ class _ProjectCard extends StatelessWidget {
                   const Icon(Icons.folder, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(project.name, style: Theme.of(context).textTheme.titleMedium),
+                    child: Text(project.name,
+                        style: Theme.of(context).textTheme.titleMedium),
                   ),
                   IconButton(
                     icon: const Icon(Icons.edit, size: 18),
-                    onPressed: () => _showEditProjectDialog(context, project, onProjectUpdated),
+                    onPressed: () => _showEditProjectDialog(
+                        context, project, onProjectUpdated),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -338,9 +351,12 @@ class _ProjectCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           '${project.meetings.length} 个会议',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ],
                     ),
@@ -351,26 +367,28 @@ class _ProjectCard extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomRight,
                 child: FilledButton.tonal(
-                onPressed: () => Navigator.of(context).push(
-                  PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => ProjectShellPage(project: project),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(1.0, 0.0),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOutCubic,
-                        )),
-                        child: child,
-                      );
-                    },
-                    transitionDuration: const Duration(milliseconds: 300),
+                  onPressed: () => Navigator.of(context).push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          ProjectShellPage(project: project),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
                   ),
+                  child: const Text('进入'),
                 ),
-                child: const Text('进入'),
-              ),
               ),
             ],
           ),

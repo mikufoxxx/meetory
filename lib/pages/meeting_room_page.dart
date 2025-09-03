@@ -120,6 +120,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
           });
           break;
         default:
+          // Handle other event types like discoveryStarted, discoveryStopped, etc.
           break;
       }
     });
@@ -142,8 +143,8 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
   void _enterRoom(_LanRoom r) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
-            roomName: r.name, host: r.host, port: r.port),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MeetingRoomDetailPage(roomName: r.name, host: r.host, port: r.port),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: Tween<Offset>(
@@ -180,8 +181,10 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
             onPressed: () {
               Navigator.of(context).push(
                 PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      const UserManagementPage(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
                     return SlideTransition(
                       position: Tween<Offset>(
                         begin: const Offset(1.0, 0.0),
@@ -264,14 +267,12 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                         const SizedBox(height: 4),
                         Text(
                           meetingConfig?.subject ?? '未知会议',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimaryContainer,
+                                  ),
                         ),
                         Text(
                           '项目: ${meetingConfig?.project ?? '未分类'}',
@@ -300,14 +301,17 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                       FloatingRecordingOverlay.hide();
                       Navigator.of(context).push(
                         PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  MeetingRoomDetailPage(
                             roomName:
                                 'Meetory #${DateTime.now().millisecondsSinceEpoch % 10000}',
                             host: '127.0.0.1',
                             port: 3030,
                             config: meetingConfig,
                           ),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
                             return SlideTransition(
                               position: Tween<Offset>(
                                 begin: const Offset(1.0, 0.0),
@@ -416,8 +420,10 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
         onPressed: () {
           Navigator.of(context).push(
             PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => const MeetingRoomConfigPage(),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const MeetingRoomConfigPage(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return SlideTransition(
                   position: Tween<Offset>(
                     begin: const Offset(0.0, 1.0),

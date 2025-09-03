@@ -10,16 +10,16 @@ import 'services/model_download_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // 检查模型是否已下载，如果没有则显示下载界面
   final modelsExist = await ModelDownloadService.areAllModelsDownloaded();
-  
+
   runApp(MeetoryApp(needsModelDownload: !modelsExist));
 }
 
 class MeetoryApp extends StatelessWidget {
   final bool needsModelDownload;
-  
+
   const MeetoryApp({super.key, this.needsModelDownload = false});
 
   @override
@@ -36,7 +36,9 @@ class MeetoryApp extends StatelessWidget {
       child: MaterialApp(
         title: '会忆 Meetory',
         theme: theme,
-        home: needsModelDownload ? const ModelDownloadPage() : const RootScaffold(),
+        home: needsModelDownload
+            ? const ModelDownloadPage()
+            : const RootScaffold(),
       ),
     );
   }
@@ -130,9 +132,18 @@ class _RootScaffoldState extends State<RootScaffold> {
             selectedIndex: _index,
             onDestinationSelected: (i) => setState(() => _index = i),
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.folder_outlined), selectedIcon: Icon(Icons.folder), label: '项目'),
-              NavigationDestination(icon: Icon(Icons.mic_none), selectedIcon: Icon(Icons.mic), label: '会议室'),
-              NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: '设置'),
+              NavigationDestination(
+                  icon: Icon(Icons.folder_outlined),
+                  selectedIcon: Icon(Icons.folder),
+                  label: '项目'),
+              NavigationDestination(
+                  icon: Icon(Icons.mic_none),
+                  selectedIcon: Icon(Icons.mic),
+                  label: '会议室'),
+              NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: '设置'),
             ],
           ),
         );
@@ -157,8 +168,8 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
   String _downloadedSize = '';
   String _totalSize = '';
   int _currentFileIndex = 0;
-  int _totalFiles = 4;
-  
+  final int _totalFiles = 4;
+
   // 下载源选择
   String _selectedSource = 'mirror'; // mirror, direct, custom
   String _customMirror = 'gitraw.techox.cc';
@@ -170,7 +181,7 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
     super.initState();
     _customMirrorController.text = _customMirror;
   }
-  
+
   @override
   void dispose() {
     _customMirrorController.dispose();
@@ -207,7 +218,7 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // 下载源选择界面
               if (_showSourceSelection) ...[
                 Card(
@@ -218,10 +229,10 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                       children: [
                         const Text(
                           '选择下载源',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
-                        
                         RadioListTile<String>(
                           title: const Text('镜像源 (推荐)'),
                           subtitle: const Text('使用 gitraw.techox.cc 镜像，下载速度更快'),
@@ -233,7 +244,6 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                             });
                           },
                         ),
-                        
                         RadioListTile<String>(
                           title: const Text('直链'),
                           subtitle: const Text('直接从 GitHub 下载，可能较慢'),
@@ -245,7 +255,6 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                             });
                           },
                         ),
-                        
                         RadioListTile<String>(
                           title: const Text('自定义镜像源'),
                           subtitle: const Text('使用自定义的镜像地址'),
@@ -257,7 +266,6 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                             });
                           },
                         ),
-                        
                         if (_selectedSource == 'custom') ...[
                           const SizedBox(height: 8),
                           TextField(
@@ -273,7 +281,6 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
                             },
                           ),
                         ],
-                        
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -393,7 +400,7 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
 
     try {
       String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-      
+
       if (selectedDirectory == null) {
         setState(() {
           _status = '未选择文件夹';
@@ -424,9 +431,9 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
           _status = '导入完成！正在启动应用...';
           _progress = 1.0;
         });
-        
+
         await Future.delayed(const Duration(seconds: 1));
-        
+
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const RootScaffold()),
@@ -470,11 +477,15 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
           return;
         }
       }
-      
+
       final success = await ModelDownloadService.downloadAllModels(
         sourceType: _selectedSource,
         customMirror: customMirror,
-        onProgress: (modelKey, progress, {String? speed, String? downloadedSize, String? totalSize, int? fileIndex}) {
+        onProgress: (modelKey, progress,
+            {String? speed,
+            String? downloadedSize,
+            String? totalSize,
+            int? fileIndex}) {
           setState(() {
             _currentModel = _getModelDisplayName(modelKey);
             _progress = progress;
@@ -493,10 +504,10 @@ class _ModelDownloadPageState extends State<ModelDownloadPage> {
           _progress = 1.0;
           _currentFileIndex = _totalFiles;
         });
-        
+
         // 等待一秒后重启应用
         await Future.delayed(const Duration(seconds: 1));
-        
+
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const RootScaffold()),

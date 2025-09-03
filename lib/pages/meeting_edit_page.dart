@@ -19,21 +19,21 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
   late final TextEditingController _subjectController;
   late final TextEditingController _projectController;
   late final TextEditingController _maxParticipantsController;
-  
+
   List<String> _tags = [];
   List<User> _selectedUsers = [];
   List<User> _allUsers = [];
   List<String> _availableProjects = [];
   List<String> _availableTags = [];
-  
+
   @override
   void initState() {
     super.initState();
     _subjectController = TextEditingController(text: widget.meeting.title);
-    _projectController = TextEditingController(text: widget.meeting.config?.project ?? '未分类');
+    _projectController =
+        TextEditingController(text: widget.meeting.config?.project ?? '未分类');
     _maxParticipantsController = TextEditingController(
-      text: widget.meeting.config?.maxParticipants.toString() ?? '4'
-    );
+        text: widget.meeting.config?.maxParticipants.toString() ?? '4');
     _tags = List.from(widget.meeting.tags);
     _selectedUsers = List.from(widget.meeting.config?.participants ?? []);
     _loadData();
@@ -104,7 +104,8 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
                   itemCount: _allUsers.length,
                   itemBuilder: (context, index) {
                     final user = _allUsers[index];
-                    final isSelected = _selectedUsers.any((u) => u.id == user.id);
+                    final isSelected =
+                        _selectedUsers.any((u) => u.id == user.id);
                     return CheckboxListTile(
                       title: Text(user.name),
                       subtitle: user.email != null ? Text(user.email!) : null,
@@ -138,7 +139,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
 
   void _showCustomProjectDialog() {
     final customProjectController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -252,7 +253,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
 
   Future<void> _saveMeeting() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final maxParticipants = int.tryParse(_maxParticipantsController.text) ?? 4;
     if (_selectedUsers.length > maxParticipants) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -260,7 +261,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
       );
       return;
     }
-    
+
     try {
       final updatedConfig = MeetingConfig(
         subject: _subjectController.text.trim(),
@@ -283,7 +284,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
       );
 
       await MeetingService.instance.saveMeeting(updatedMeeting);
-      
+
       if (mounted) {
         Navigator.of(context).pop(updatedMeeting);
       }
@@ -304,24 +305,28 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                    return SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(1.0, 0.0),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      )),
-                      child: child,
-                    );
-                  },
-                  transitionDuration: const Duration(milliseconds: 300),
-                ),
-              ).then((_) => _loadUsers());
+              Navigator.of(context)
+                  .push(
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const UserManagementPage(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
+                  )
+                  .then((_) => _loadUsers());
             },
             icon: const Icon(Icons.people),
             tooltip: '用户管理',
@@ -363,7 +368,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // 项目设置
             Card(
               child: Padding(
@@ -377,9 +382,10 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _availableProjects.contains(_projectController.text) 
-                          ? _projectController.text 
-                          : null,
+                      value:
+                          _availableProjects.contains(_projectController.text)
+                              ? _projectController.text
+                              : null,
                       decoration: const InputDecoration(
                         hintText: '选择项目',
                         border: OutlineInputBorder(),
@@ -409,7 +415,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // 参与者设置
             Card(
               child: Padding(
@@ -426,9 +432,12 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
                         const Spacer(),
                         Text(
                           '${_selectedUsers.length}/${_maxParticipantsController.text}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                         ),
                       ],
                     ),
@@ -457,24 +466,30 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                PageRouteBuilder(
-                                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
-                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                    return SlideTransition(
-                                      position: Tween<Offset>(
-                                        begin: const Offset(1.0, 0.0),
-                                        end: Offset.zero,
-                                      ).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOutCubic,
-                                      )),
-                                      child: child,
-                                    );
-                                  },
-                                  transitionDuration: const Duration(milliseconds: 300),
-                                ),
-                              ).then((_) => _loadUsers());
+                              Navigator.of(context)
+                                  .push(
+                                    PageRouteBuilder(
+                                      pageBuilder: (context, animation,
+                                              secondaryAnimation) =>
+                                          const UserManagementPage(),
+                                      transitionsBuilder: (context, animation,
+                                          secondaryAnimation, child) {
+                                        return SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(1.0, 0.0),
+                                            end: Offset.zero,
+                                          ).animate(CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeOutCubic,
+                                          )),
+                                          child: child,
+                                        );
+                                      },
+                                      transitionDuration:
+                                          const Duration(milliseconds: 300),
+                                    ),
+                                  )
+                                  .then((_) => _loadUsers());
                             },
                             icon: const Icon(Icons.person_add),
                             label: const Text('添加用户'),
@@ -496,24 +511,34 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
                                 margin: const EdgeInsets.symmetric(vertical: 4),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                    backgroundColor: Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer,
                                     child: Text(
-                                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                                      user.name.isNotEmpty
+                                          ? user.name[0].toUpperCase()
+                                          : '?',
                                       style: TextStyle(
-                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                                   title: Text(user.name),
-                                  subtitle: user.email != null ? Text(user.email!) : null,
+                                  subtitle: user.email != null
+                                      ? Text(user.email!)
+                                      : null,
                                   trailing: IconButton(
                                     onPressed: () {
                                       setState(() {
-                                        _selectedUsers.removeWhere((u) => u.id == user.id);
+                                        _selectedUsers.removeWhere(
+                                            (u) => u.id == user.id);
                                       });
                                     },
-                                    icon: const Icon(Icons.remove_circle_outline),
+                                    icon:
+                                        const Icon(Icons.remove_circle_outline),
                                   ),
                                 ),
                               );
@@ -526,7 +551,7 @@ class _MeetingEditPageState extends State<MeetingEditPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // 标签设置
             Card(
               child: Padding(

@@ -48,16 +48,18 @@ class _UserManagementPageState extends State<UserManagementPage> {
 
   List<User> get _filteredUsers {
     if (_searchQuery.isEmpty) return _users;
-    return _users.where((user) => 
-      user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-      (user.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
-    ).toList();
+    return _users
+        .where((user) =>
+            user.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            (user.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+                false))
+        .toList();
   }
 
   Future<void> _showAddUserDialog([User? editUser]) async {
     final nameController = TextEditingController(text: editUser?.name ?? '');
     final emailController = TextEditingController(text: editUser?.email ?? '');
-    
+
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -98,21 +100,23 @@ class _UserManagementPageState extends State<UserManagementPage> {
                 );
                 return;
               }
-              
+
               try {
                 final user = User(
                   id: editUser?.id ?? _userService.generateUserId(),
                   name: name,
-                  email: emailController.text.trim().isEmpty ? null : emailController.text.trim(),
+                  email: emailController.text.trim().isEmpty
+                      ? null
+                      : emailController.text.trim(),
                   createdAt: editUser?.createdAt ?? DateTime.now(),
                 );
-                
+
                 if (editUser == null) {
                   await _userService.addUser(user);
                 } else {
                   await _userService.updateUser(user);
                 }
-                
+
                 // ignore: use_build_context_synchronously
                 Navigator.of(context).pop(true);
               } catch (e) {
@@ -127,7 +131,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
         ],
       ),
     );
-    
+
     if (result == true) {
       _loadUsers();
     }
@@ -154,7 +158,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       try {
         await _userService.deleteUser(user.id);
@@ -216,24 +220,30 @@ class _UserManagementPageState extends State<UserManagementPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _searchQuery.isEmpty ? Icons.people_outline : Icons.search_off,
+                        _searchQuery.isEmpty
+                            ? Icons.people_outline
+                            : Icons.search_off,
                         size: 64,
                         color: Theme.of(context).colorScheme.outline,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _searchQuery.isEmpty ? '暂无用户' : '未找到匹配的用户',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
                       ),
                       if (_searchQuery.isEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
                           '点击右下角按钮添加用户',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.outline,
+                              ),
                         ),
                       ],
                     ],
@@ -244,7 +254,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                     // 响应式网格布局
                     int crossAxisCount;
                     double childAspectRatio;
-                    
+
                     if (constraints.maxWidth > 1200) {
                       crossAxisCount = 4;
                       childAspectRatio = 1.2;
@@ -258,7 +268,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       crossAxisCount = 1;
                       childAspectRatio = 2.5;
                     }
-                    
+
                     return GridView.builder(
                       padding: const EdgeInsets.all(16),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -291,13 +301,13 @@ class _UserCard extends StatelessWidget {
   final User user;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  
+
   const _UserCard({
     required this.user,
     required this.onEdit,
     required this.onDelete,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -324,34 +334,34 @@ class _UserCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // 用户姓名
               Text(
                 user.name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               // 用户邮箱
               if (user.email != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   user.email!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              
+
               const SizedBox(height: 12),
-              
+
               // 操作按钮
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -361,7 +371,11 @@ class _UserCard extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined),
                     tooltip: '编辑',
                     style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .primaryContainer
+                          // ignore: deprecated_member_use
+                          .withOpacity(0.3),
                       foregroundColor: Theme.of(context).colorScheme.primary,
                     ),
                   ),
@@ -370,7 +384,11 @@ class _UserCard extends StatelessWidget {
                     icon: const Icon(Icons.delete_outline),
                     tooltip: '删除',
                     style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+                      backgroundColor: Theme.of(context)
+                          .colorScheme
+                          .errorContainer
+                          // ignore: deprecated_member_use
+                          .withOpacity(0.3),
                       foregroundColor: Theme.of(context).colorScheme.error,
                     ),
                   ),

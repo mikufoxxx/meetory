@@ -31,7 +31,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
         debugPrint('Audio URL is empty, skipping audio initialization');
         return;
       }
-      
+
       // 检查文件是否存在（对于本地文件）
       if (!widget.meeting.audioUrl.startsWith('http')) {
         final file = File(widget.meeting.audioUrl);
@@ -40,7 +40,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
           return;
         }
       }
-      
+
       await _player.setUrl(widget.meeting.audioUrl);
     } catch (e) {
       debugPrint('Failed to load audio: $e');
@@ -62,7 +62,8 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
   Future<void> _showEditMeetingDialog(BuildContext context) async {
     final result = await Navigator.of(context).push<Meeting>(
       PageRouteBuilder<Meeting>(
-        pageBuilder: (context, animation, secondaryAnimation) => MeetingEditPage(meeting: widget.meeting),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            MeetingEditPage(meeting: widget.meeting),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: Tween<Offset>(
@@ -78,12 +79,13 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
         transitionDuration: const Duration(milliseconds: 300),
       ),
     );
-    
+
     if (result != null) {
       setState(() {
         // 触发页面重建以显示更新后的信息
       });
       if (mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('会议信息更新成功')),
         );
@@ -91,14 +93,12 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 1000;
-        
+
         final appBar = AppBar(
           title: GestureDetector(
             onTap: () => setState(() => _showInfo = !_showInfo),
@@ -115,8 +115,10 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
               onPressed: () {
                 Navigator.of(context).push(
                   PageRouteBuilder(
-                    pageBuilder: (context, animation, secondaryAnimation) => MeetingDocumentPage(meeting: widget.meeting),
-                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        MeetingDocumentPage(meeting: widget.meeting),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
                       return SlideTransition(
                         position: Tween<Offset>(
                           begin: const Offset(1.0, 0.0),
@@ -142,7 +144,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
                 )
               : null,
         );
-        
+
         final messagesList = Expanded(
           child: Card(
             margin: const EdgeInsets.all(12),
@@ -153,15 +155,19 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
                 final msg = widget.meeting.messages[index];
                 final isSelf = index % 2 == 0;
                 return Align(
-                  alignment: isSelf ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment:
+                      isSelf ? Alignment.centerLeft : Alignment.centerRight,
                   child: GestureDetector(
                     onTap: () => _seekTo(msg.start),
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         color: isSelf
-                            ? Theme.of(context).colorScheme.surfaceContainerHighest
+                            ? Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
                             : Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -189,9 +195,9 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
             ),
           ),
         );
-        
+
         final audioPlayer = SafeArea(child: _AudioPlayerBar(player: _player));
-        
+
         if (isWide) {
           return Scaffold(
             appBar: appBar,
@@ -208,7 +214,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
             ),
           );
         }
-        
+
         return Scaffold(
           appBar: appBar,
           body: Column(
@@ -312,8 +318,13 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Slider(
-                      value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
-                      max: (_duration.inMilliseconds == 0 ? 1 : _duration.inMilliseconds).toDouble(),
+                      value: _position.inMilliseconds
+                          .clamp(0, _duration.inMilliseconds)
+                          .toDouble(),
+                      max: (_duration.inMilliseconds == 0
+                              ? 1
+                              : _duration.inMilliseconds)
+                          .toDouble(),
                       onChanged: (v) {
                         widget.player.seek(Duration(milliseconds: v.toInt()));
                       },
@@ -321,8 +332,10 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_fmtDuration(_position), style: Theme.of(context).textTheme.bodySmall),
-                        Text(_fmtDuration(_duration), style: Theme.of(context).textTheme.bodySmall),
+                        Text(_fmtDuration(_position),
+                            style: Theme.of(context).textTheme.bodySmall),
+                        Text(_fmtDuration(_duration),
+                            style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                   ],
@@ -358,10 +371,12 @@ class MeetingDocumentPage extends StatelessWidget {
           children: [
             Text(meeting.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
-            Text('时间：${meeting.time}')
-            ,
+            Text('时间：${meeting.time}'),
             const SizedBox(height: 12),
-            Wrap(spacing: 8, children: meeting.tags.map((t) => Chip(label: Text(t))).toList()),
+            Wrap(
+                spacing: 8,
+                children:
+                    meeting.tags.map((t) => Chip(label: Text(t))).toList()),
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 8),
