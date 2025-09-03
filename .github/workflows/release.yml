@@ -41,8 +41,20 @@ jobs:
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
           $release = "${{ github.workspace }}\\build\\windows\\x64\\runner\\Release"
           $zip = "${{ github.workspace }}\\artifacts\\meetory-windows-x64.zip"
-          if (-Not (Test-Path $release)) { $release = "${{ github.workspace }}\\build\\windows\\runner\\Release" }
-          Compress-Archive -Path "$release\\*" -DestinationPath $zip -Force
+          if (-Not (Test-Path $release)) { 
+            $release = "${{ github.workspace }}\\build\\windows\\runner\\Release" 
+            Write-Host "Using fallback path: $release"
+          }
+          Write-Host "Release path: $release"
+          Write-Host "Zip path: $zip"
+          if (Test-Path $release) {
+            Get-ChildItem $release | Write-Host
+            Compress-Archive -Path "$release\\*" -DestinationPath $zip -Force
+            Write-Host "Zip created successfully"
+          } else {
+            Write-Error "Release directory not found: $release"
+            exit 1
+          }
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -80,8 +92,17 @@ jobs:
 
       - name: Rename APK
         run: |
+          echo "Checking APK build output..."
+          ls -la build/app/outputs/flutter-apk/
           mkdir -p artifacts
-          cp build/app/outputs/flutter-apk/app-debug.apk artifacts/meetory-android-debug.apk
+          if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
+            cp build/app/outputs/flutter-apk/app-debug.apk artifacts/meetory-android-debug.apk
+            echo "APK copied successfully"
+            ls -la artifacts/
+          else
+            echo "APK file not found!"
+            exit 1
+          fi
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
@@ -99,13 +120,34 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: meetory-windows-x64
-          path: ./dist
+          path: ./windows-dist
 
       - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
           name: meetory-android-debug
-          path: ./dist
+          path: ./android-dist
+
+      - name: Prepare artifacts
+        run: |
+          echo "Checking downloaded artifacts..."
+          ls -la windows-dist/ || echo "Windows dist not found"
+          ls -la android-dist/ || echo "Android dist not found"
+          mkdir -p dist
+          if [ -f "windows-dist/meetory-windows-x64.zip" ]; then
+            cp windows-dist/meetory-windows-x64.zip dist/
+            echo "Windows artifact copied"
+          else
+            echo "Windows artifact not found!"
+          fi
+          if [ -f "android-dist/meetory-android-debug.apk" ]; then
+            cp android-dist/meetory-android-debug.apk dist/
+            echo "Android artifact copied"
+          else
+            echo "Android artifact not found!"
+          fi
+          echo "Final dist contents:"
+          ls -la dist/
 
       - name: Checkout repo for release notes
         uses: actions/checkout@v4

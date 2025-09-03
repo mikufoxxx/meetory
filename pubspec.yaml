@@ -10,12 +10,28 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  provider: any
-  just_audio: any
-  sherpa_onnx: any
-  package_info_plus: any
-  http: any
-  url_launcher: any
+  provider: ^6.1.5+1
+  just_audio: ^0.10.4
+  sherpa_onnx: ^1.12.11
+  package_info_plus: ^8.3.1
+  http: ^1.5.0
+  url_launcher: ^6.3.2
+  # File system directories for native platforms
+  path_provider: ^2.1.4
+  # LAN service discovery and broadcast
+  bonsoir: 
+  # Microphone PCM stream capture
+  mic_stream: ^0.7.2
+  # Cross-platform microphone PCM streaming
+  record: 
+  # Permissions handling
+  permission_handler: 
+  # Realtime signaling/transport
+  web_socket_channel:
+  # Local data storage
+  shared_preferences: ^2.3.2
+  # Path manipulation
+  path: ^1.9.0 
 
 dev_dependencies:
   flutter_test:
@@ -24,3 +40,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    # Root models folder
+    - assets/models/
+    # Explicit subtrees to ensure nested directories are bundled
+    - assets/models/asr/
+    - assets/models/asr/sherpa-onnx-streaming-zipformer-zh-fp16-2025-06-30/
+    - assets/models/speaker_diarization/
