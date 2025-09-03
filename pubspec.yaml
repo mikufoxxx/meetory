@@ -44,9 +44,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    # Only include empty model directories structure, not the actual model files
-    - assets/models/
-    - assets/models/asr/
-    - assets/models/speaker_diarization/
-    - assets/models/VAD/
+  # assets:
+    # Model files are downloaded at runtime, not bundled with the app
+    # - assets/models/
