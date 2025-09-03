@@ -19,7 +19,7 @@ dependencies:
   # File system directories for native platforms
   path_provider: ^2.1.4
   # LAN service discovery and broadcast
-  bonsoir: 
+  bonsoir: ^5.1.11
   # Microphone PCM stream capture
   mic_stream: ^0.7.2
   # Cross-platform microphone PCM streaming
