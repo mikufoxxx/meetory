@@ -312,14 +312,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.15.0"
-  mic_stream:
-    dependency: "direct main"
-    description:
-      name: mic_stream
-      sha256: cd024113c2e25d32172af483816cef49eb808458ceb3186fa4e3e53353bf13cd
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.7.2"
   nested:
     dependency: transitive
     description:
@@ -484,10 +476,10 @@ packages:
     dependency: "direct main"
     description:
       name: record
-      sha256: "9dbc6ff3e784612f90a9b001373c45ff76b7a08abd2bd9fdf72c242320c8911c"
+      sha256: "2e3d56d196abcd69f1046339b75e5f3855b2406fc087e5991f6703f188aa03a6"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "6.1.1"
+    version: "5.2.1"
   record_android:
     dependency: transitive
     description:
@@ -496,30 +488,22 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.4.1"
-  record_ios:
+  record_darwin:
     dependency: transitive
     description:
-      name: record_ios
-      sha256: "13e241ed9cbc220534a40ae6b66222e21288db364d96dd66fb762ebd3cb77c71"
+      name: record_darwin
+      sha256: e487eccb19d82a9a39cd0126945cfc47b9986e0df211734e2788c95e3f63c82c
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.1.2"
+    version: "1.2.2"
   record_linux:
     dependency: transitive
     description:
       name: record_linux
-      sha256: "235b1f1fb84e810f8149cc0c2c731d7d697f8d1c333b32cb820c449bf7bb72d8"
+      sha256: "74d41a9ebb1eb498a38e9a813dd524e8f0b4fdd627270bda9756f437b110a3e3"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.2.1"
-  record_macos:
-    dependency: transitive
-    description:
-      name: record_macos
-      sha256: "2849068bb59072f300ad63ed146e543d66afaef8263edba4de4834fc7c8d4d35"
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.1.1"
+    version: "0.7.2"
   record_platform_interface:
     dependency: transitive
     description:

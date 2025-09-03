@@ -3,9 +3,9 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import 'dart:io';
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:mic_stream/mic_stream.dart';
+// Removed mic_stream import - using record for all platforms
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa_onnx;
@@ -26,7 +26,7 @@ class AsrProvider extends ChangeNotifier {
   bool _running = false;
   final List<String> _lines = [];
   // Removed unused _fakeTimer
-  StreamSubscription<List<int>>? _micSub; // mobile mic_stream
+  // Removed _micSub - using unified record approach
   
   // Recording duration tracking
   DateTime? _recordingStartTime;
@@ -431,10 +431,11 @@ class AsrProvider extends ChangeNotifier {
       }
     });
 
-    // Mobile path: Android/iOS via mic_stream
-    if (!kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.android ||
-            defaultTargetPlatform == TargetPlatform.iOS)) {
+    // Unified cross-platform recording using record plugin (Android/iOS/Windows/macOS/Linux/Web)
+    if (!_running) return;
+    
+    // Request microphone permission for all platforms
+    if (!kIsWeb) {
       final status = await Permission.microphone.request();
       if (!status.isGranted) {
         _running = false;
@@ -442,66 +443,8 @@ class AsrProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
-      try {
-        final micStream = MicStream.microphone(
-          sampleRate: 16000,
-          audioFormat: AudioFormat.ENCODING_PCM_16BIT,
-          channelConfig: ChannelConfig.CHANNEL_IN_MONO,
-          audioSource: AudioSource.MIC,
-        );
-        if (_recognizer != null) {
-          _stream = _recognizer!.createStream();
-          _lines.add('麦克风已打开，开始识别...');
-        } else {
-          _lines.add('麦克风已打开（占位），未配置 ASR 模型');
-        }
-        notifyListeners();
-        _micSub = micStream.listen((chunk) {
-          if (!_running) return;
-          if (_recognizer == null || _stream == null) {
-            return; // no-op until configured
-          }
-          try {
-            // Write raw audio data to file
-            final audioData = Uint8List.fromList(chunk);
-            _writeAudioDataToFile(audioData);
-            
-            // Accumulate raw bytes; only feed when we have enough samples
-            _pcmBuf.add(audioData);
-            final minBytes = _minSamplesPerPush * 2; // int16
-            if (_pcmBuf.length >= minBytes) {
-              final bytes = _pcmBuf.takeBytes();
-              final float32 = _pcm16leBytesToFloat32(bytes);
-              if (float32.isNotEmpty) {
-                _stream!.acceptWaveform(samples: float32, sampleRate: 16000);
-                // Also append to current utterance buffer for diarization
-                _uttBuf.addAll(float32);
-                // Feed VAD to segment utterances in real time
-                _processVadOnSamples(float32);
-                // Accumulate only when in speech (or if VAD disabled)
-                if (!_enableEnergyVad || _vadInSpeech) {
-                  _uttBuf.addAll(float32);
-                }
-              }
-            }
-          } catch (e) {
-            _lines.add('音频处理出错（mobile）：$e');
-            notifyListeners();
-          }
-        }, onError: (e) {
-          if (!_running) return;
-          _lines.add('麦克风采集出错：$e');
-          notifyListeners();
-        }, cancelOnError: false);
-      } catch (e) {
-        _lines.add('无法打开麦克风：$e');
-        notifyListeners();
-      }
-      return;
     }
-
-    // Desktop/Web: Prefer record for cross-platform streaming (Windows/macOS/Linux/Web)
-    if (!_running) return;
+    
     try {
       final hasPerm = await _recorder.hasPermission();
       if (!hasPerm) {
@@ -517,9 +460,9 @@ class AsrProvider extends ChangeNotifier {
       ));
       if (_recognizer != null) {
         _stream = _recognizer!.createStream();
-        _lines.add('麦克风已打开（桌面），开始识别...');
+        _lines.add('麦克风已打开，开始识别...');
       } else {
-        _lines.add('麦克风已打开（桌面），未配置 ASR 模型');
+        _lines.add('麦克风已打开，未配置 ASR 模型');
       }
       notifyListeners();
       _recordSub = stream.listen((data) {
@@ -550,7 +493,7 @@ class AsrProvider extends ChangeNotifier {
             }
           }
         } catch (e) {
-          _lines.add('音频处理出错（desktop）：$e');
+          _lines.add('音频处理出错：$e');
           notifyListeners();
         }
       }, onError: (e) {
@@ -573,10 +516,7 @@ class AsrProvider extends ChangeNotifier {
     // Stop audio file recording
     await stopRecordingToFile();
     
-    try {
-      await _micSub?.cancel();
-    } catch (_) {}
-    _micSub = null;
+    // Removed _micSub cleanup - using unified record approach
     try {
       await _recordSub?.cancel();
     } catch (_) {}
