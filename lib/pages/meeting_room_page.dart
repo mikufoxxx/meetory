@@ -94,35 +94,28 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
     _discoverySub = discovery.eventStream!.listen((event) async {
       final service = event.service;
       if (service == null) return;
-      switch (event.type) {
-        case BonsoirDiscoveryEventType.discoveryServiceFound:
-          try {
-            await service.resolve(discovery.serviceResolver);
-          } catch (_) {}
-          break;
-        case BonsoirDiscoveryEventType.discoveryServiceResolved:
-          final json = service.toJson();
-          final host =
-              (json['host'] ?? json['ip'] ?? json['address'] ?? 'unknown')
-                  .toString();
-          final port = service.port;
-          final name = service.name.isNotEmpty ? service.name : '会议室';
-          setState(() {
-            _rooms.removeWhere((r) => r.name == name && r.port == port);
-            _rooms.add(_LanRoom(name: name, host: host, port: port));
-          });
-          break;
-        case BonsoirDiscoveryEventType.discoveryServiceLost:
-          final name = service.name;
-          final port = service.port;
-          setState(() {
-            _rooms.removeWhere((r) => r.name == name && r.port == port);
-          });
-          break;
-        default:
-          // Handle other event types like discoveryStarted, discoveryStopped, etc.
-          break;
-      }
+      if (event.type == BonsoirDiscoveryEventType.discoveryServiceFound) {
+        try {
+          await service.resolve(discovery.serviceResolver);
+        } catch (_) {}
+      } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceResolved) {
+        final json = service.toJson();
+        final host =
+            (json['host'] ?? json['ip'] ?? json['address'] ?? 'unknown')
+                .toString();
+        final port = service.port;
+        final name = service.name.isNotEmpty ? service.name : '会议室';
+        setState(() {
+          _rooms.removeWhere((r) => r.name == name && r.port == port);
+          _rooms.add(_LanRoom(name: name, host: host, port: port));
+        });
+      } else if (event.type == BonsoirDiscoveryEventType.discoveryServiceLost) {
+        final name = service.name;
+        final port = service.port;
+        setState(() {
+           _rooms.removeWhere((r) => r.name == name && r.port == port);
+         });
+       }
     });
 
     await discovery.start();
