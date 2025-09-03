@@ -141,9 +141,23 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
 
   void _enterRoom(_LanRoom r) {
     Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (_) => MeetingRoomDetailPage(
-              roomName: r.name, host: r.host, port: r.port)),
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
+            roomName: r.name, host: r.host, port: r.port),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1.0, 0.0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
     );
   }
 
@@ -165,8 +179,21 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const UserManagementPage(),
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1.0, 0.0),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      )),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
                 ),
               );
             },
@@ -272,14 +299,27 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                       // 返回到会议详情页面
                       FloatingRecordingOverlay.hide();
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => MeetingRoomDetailPage(
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
                             roomName:
                                 'Meetory #${DateTime.now().millisecondsSinceEpoch % 10000}',
                             host: '127.0.0.1',
                             port: 3030,
                             config: meetingConfig,
                           ),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            return SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(1.0, 0.0),
+                                end: Offset.zero,
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutCubic,
+                              )),
+                              child: child,
+                            );
+                          },
+                          transitionDuration: const Duration(milliseconds: 300),
                         ),
                       );
                     },
@@ -375,8 +415,21 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const MeetingRoomConfigPage(),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => const MeetingRoomConfigPage(),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.0, 1.0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 300),
             ),
           );
         },

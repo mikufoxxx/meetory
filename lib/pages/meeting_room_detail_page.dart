@@ -247,13 +247,20 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
              onTap: () {
                FloatingRecordingOverlay.hide();
                Navigator.of(context).push(
-                 MaterialPageRoute(
-                   builder: (context) => MeetingRoomDetailPage(
+                 PageRouteBuilder(
+                   pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
                      roomName: widget.roomName,
                      host: widget.host,
                      port: widget.port,
                      config: widget.config,
                    ),
+                   transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                     return FadeTransition(
+                       opacity: animation,
+                       child: child,
+                     );
+                   },
+                   transitionDuration: const Duration(milliseconds: 300),
                  ),
                );
              },
@@ -274,14 +281,23 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                    meetingConfig: widget.config,
                    onTap: () {
                      FloatingRecordingOverlay.hide();
-                     Navigator.of(context).push(
-                       MaterialPageRoute(
-                         builder: (context) => MeetingRoomDetailPage(
+                     // 使用全局导航器来避免context失效问题
+                     final navigatorState = Navigator.of(context, rootNavigator: true);
+                     navigatorState.push(
+                       PageRouteBuilder(
+                         pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
                            roomName: widget.roomName,
                            host: widget.host,
                            port: widget.port,
                            config: widget.config,
                          ),
+                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                           return FadeTransition(
+                             opacity: animation,
+                             child: child,
+                           );
+                         },
+                         transitionDuration: const Duration(milliseconds: 300),
                        ),
                      );
                    },
@@ -463,6 +479,11 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                               setState(() {
                                 _meetingStartTime = DateTime.now();
                               });
+                              
+                              // 开始录音到文件
+                              final projectName = widget.config?.project ?? '未分类';
+                              await asrProvider.startRecordingToFile(projectName, _meetingId);
+                              
                               await asrProvider.start();
                               
                               // 显示悬浮录音窗口
@@ -489,7 +510,10 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
                       onPressed: asr.running ? () async {
-                        context.read<AsrProvider>().stop();
+                        final asrProvider = context.read<AsrProvider>();
+                        asrProvider.stop();
+                        // 停止录音到文件
+                        await asrProvider.stopRecordingToFile();
                         setState(() {
                         });
                         // 保存最终的会议记录
@@ -624,28 +648,79 @@ class _MeetingRoomDetailPageState extends State<MeetingRoomDetailPage> {
       builder: (context) => AlertDialog(
         title: const Text('会议信息'),
         content: widget.config != null
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _InfoRow('主题', widget.config!.subject),
-                  _InfoRow('项目', widget.config!.project),
-                  _InfoRow('最大人数', '${widget.config!.maxParticipants}人'),
-                  if (widget.config!.tags.isNotEmpty)
-                    _InfoRow('标签', widget.config!.tags.join(', ')),
-                  const SizedBox(height: 8),
-                  Text(
-                    '参与者 (${widget.config!.participants.length})',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 4),
-                  ...widget.config!.participants.map((user) => 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text('• ${user.name}'),
+            ? SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '会议配置详情',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            _InfoRow('主题', widget.config!.subject),
+                            _InfoRow('项目', widget.config!.project),
+                            _InfoRow('最大人数', '${widget.config!.maxParticipants}人'),
+                            if (widget.config!.tags.isNotEmpty)
+                              _InfoRow('标签', widget.config!.tags.join(', ')),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (widget.config!.participants.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '参与者 (${widget.config!.participants.length})',
+                                style: Theme.of(context).textTheme.titleSmall,
+                              ),
+                              const SizedBox(height: 8),
+                              ...widget.config!.participants.map((user) => 
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 12,
+                                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                        child: Text(
+                                          user.name[0].toUpperCase(),
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        user.name,
+                                        style: Theme.of(context).textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               )
             : const Text('未配置会议信息'),
         actions: [
@@ -729,7 +804,7 @@ class _SpeakerMappingDialogState extends State<_SpeakerMappingDialog> {
     final asr = Provider.of<AsrProvider>(context, listen: false);
     final detectedSpeakers = asr.detectedSpeakers.isNotEmpty 
         ? asr.detectedSpeakers 
-        : ['S1', 'S2', 'S3', 'S4']; // 默认显示4个说话人选项
+        : List.generate(widget.config.participants.length, (index) => 'S${index + 1}'); // 根据实际参与者数量生成说话人选项
     
     return AlertDialog(
       title: const Text('说话人映射'),

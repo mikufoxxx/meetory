@@ -239,63 +239,146 @@ class _UserManagementPageState extends State<UserManagementPage> {
                     ],
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _filteredUsers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final user = _filteredUsers[index];
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          child: Text(
-                            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        title: Text(user.name),
-                        subtitle: user.email != null ? Text(user.email!) : null,
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (value) {
-                            switch (value) {
-                              case 'edit':
-                                _showAddUserDialog(user);
-                                break;
-                              case 'delete':
-                                _deleteUser(user);
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: ListTile(
-                                leading: Icon(Icons.edit),
-                                title: Text('编辑'),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: ListTile(
-                                leading: Icon(Icons.delete),
-                                title: Text('删除'),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                          ],
-                        ),
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    // 响应式网格布局
+                    int crossAxisCount;
+                    double childAspectRatio;
+                    
+                    if (constraints.maxWidth > 1200) {
+                      crossAxisCount = 4;
+                      childAspectRatio = 1.2;
+                    } else if (constraints.maxWidth > 800) {
+                      crossAxisCount = 3;
+                      childAspectRatio = 1.1;
+                    } else if (constraints.maxWidth > 600) {
+                      crossAxisCount = 2;
+                      childAspectRatio = 1.0;
+                    } else {
+                      crossAxisCount = 1;
+                      childAspectRatio = 2.5;
+                    }
+                    
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        childAspectRatio: childAspectRatio,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
                       ),
+                      itemCount: _filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        final user = _filteredUsers[index];
+                        return _UserCard(
+                          user: user,
+                          onEdit: () => _showAddUserDialog(user),
+                          onDelete: () => _deleteUser(user),
+                        );
+                      },
                     );
                   },
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddUserDialog(),
         child: const Icon(Icons.person_add),
+      ),
+    );
+  }
+}
+
+class _UserCard extends StatelessWidget {
+  final User user;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  
+  const _UserCard({
+    required this.user,
+    required this.onEdit,
+    required this.onDelete,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 用户头像
+              CircleAvatar(
+                radius: 32,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Text(
+                  user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // 用户姓名
+              Text(
+                user.name,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              
+              // 用户邮箱
+              if (user.email != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  user.email!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              
+              const SizedBox(height: 12),
+              
+              // 操作按钮
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: '编辑',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: '删除',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

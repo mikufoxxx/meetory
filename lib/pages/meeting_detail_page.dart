@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart' hide AudioSource;
 import '../models/meeting.dart';
-import '../models/user.dart';
-import '../services/meeting_service.dart';
+import 'meeting_edit_page.dart';
 
 class MeetingDetailPage extends StatefulWidget {
   final Meeting meeting;
@@ -26,6 +26,21 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
 
   Future<void> _init() async {
     try {
+      // 检查音频URL是否有效
+      if (widget.meeting.audioUrl.isEmpty) {
+        debugPrint('Audio URL is empty, skipping audio initialization');
+        return;
+      }
+      
+      // 检查文件是否存在（对于本地文件）
+      if (!widget.meeting.audioUrl.startsWith('http')) {
+        final file = File(widget.meeting.audioUrl);
+        if (!await file.exists()) {
+          debugPrint('Audio file does not exist: ${widget.meeting.audioUrl}');
+          return;
+        }
+      }
+      
       await _player.setUrl(widget.meeting.audioUrl);
     } catch (e) {
       debugPrint('Failed to load audio: $e');
@@ -45,189 +60,94 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
   }
 
   Future<void> _showEditMeetingDialog(BuildContext context) async {
-    final titleController = TextEditingController(text: widget.meeting.title);
-    final projectController = TextEditingController(text: widget.meeting.config?.project ?? '');
-    final maxParticipantsController = TextEditingController(
-      text: widget.meeting.config?.maxParticipants.toString() ?? '4'
+    final result = await Navigator.of(context).push<Meeting>(
+      PageRouteBuilder<Meeting>(
+        pageBuilder: (context, animation, secondaryAnimation) => MeetingEditPage(meeting: widget.meeting),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1.0, 0.0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
     );
-    final tagsController = TextEditingController(
-      text: widget.meeting.tags.join(', ')
-    );
-    final participantsController = TextEditingController(
-      text: widget.meeting.config?.participants.join(', ') ?? ''
-    );
-
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('编辑会议信息'),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: '会议标题',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: projectController,
-                    decoration: const InputDecoration(
-                      labelText: '项目名称',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: maxParticipantsController,
-                    decoration: const InputDecoration(
-                      labelText: '最大参与人数',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: tagsController,
-                    decoration: const InputDecoration(
-                      labelText: '标签 (用逗号分隔)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: participantsController,
-                    decoration: const InputDecoration(
-                      labelText: '参会人员 (用逗号分隔)',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final newTitle = titleController.text.trim();
-                final newProject = projectController.text.trim();
-                final newMaxParticipants = int.tryParse(maxParticipantsController.text.trim()) ?? 4;
-                final newTags = tagsController.text
-                    .split(',')
-                    .map((tag) => tag.trim())
-                    .where((tag) => tag.isNotEmpty)
-                    .toList();
-                final newParticipants = participantsController.text
-                    .split(',')
-                    .map((participant) => participant.trim())
-                    .where((participant) => participant.isNotEmpty)
-                    .map((name) => User(id: name.toLowerCase().replaceAll(' ', '_'), name: name, createdAt: DateTime.now()))
-                    .toList();
-
-                if (newTitle.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('会议标题不能为空')),
-                  );
-                  return;
-                }
-
-                try {
-                  final updatedConfig = MeetingConfig(
-                    subject: newTitle,
-                    tags: newTags,
-                    project: newProject.isEmpty ? '未分类' : newProject,
-                    maxParticipants: newMaxParticipants,
-                    participants: newParticipants,
-                  );
-
-                  final updatedMeeting = Meeting(
-                    id: widget.meeting.id,
-                    projectId: widget.meeting.projectId,
-                    title: newTitle,
-                    time: widget.meeting.time,
-                    tags: newTags,
-                    audioUrl: widget.meeting.audioUrl,
-                    messages: widget.meeting.messages,
-                    config: updatedConfig,
-                    speakerMapping: widget.meeting.speakerMapping,
-                  );
-
-                  await MeetingService.instance.saveMeeting(updatedMeeting);
-
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    setState(() {
-                      // 触发页面重建以显示更新后的信息
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('会议信息更新成功')),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('更新失败: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('保存'),
-            ),
-          ],
+    
+    if (result != null) {
+      setState(() {
+        // 触发页面重建以显示更新后的信息
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('会议信息更新成功')),
         );
-      },
-    );
+      }
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: GestureDetector(
-          onTap: () => setState(() => _showInfo = !_showInfo),
-          child: Text(widget.meeting.title),
-        ),
-        actions: [
-          IconButton(
-            tooltip: '编辑会议',
-            onPressed: () => _showEditMeetingDialog(context),
-            icon: const Icon(Icons.edit),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 1000;
+        
+        final appBar = AppBar(
+          title: GestureDetector(
+            onTap: () => setState(() => _showInfo = !_showInfo),
+            child: Text(widget.meeting.title),
           ),
-          IconButton(
-            tooltip: '查看文档',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => MeetingDocumentPage(meeting: widget.meeting),
-                ),
-              );
-            },
-            icon: const Icon(Icons.description_outlined),
-          )
-        ],
-        bottom: _showInfo
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(80),
-                child: _InfoBar(meeting: widget.meeting),
-              )
-            : null,
-      ),
-      body: Column(
-        children: [
-          Expanded(
+          actions: [
+            IconButton(
+              tooltip: '编辑会议',
+              onPressed: () => _showEditMeetingDialog(context),
+              icon: const Icon(Icons.edit),
+            ),
+            IconButton(
+              tooltip: '查看文档',
+              onPressed: () {
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) => MeetingDocumentPage(meeting: widget.meeting),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(1.0, 0.0),
+                          end: Offset.zero,
+                        ).animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        )),
+                        child: child,
+                      );
+                    },
+                    transitionDuration: const Duration(milliseconds: 300),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.description_outlined),
+            )
+          ],
+          bottom: _showInfo
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(80),
+                  child: _InfoBar(meeting: widget.meeting),
+                )
+              : null,
+        );
+        
+        final messagesList = Expanded(
+          child: Card(
+            margin: const EdgeInsets.all(12),
             child: ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: widget.meeting.messages.length,
               itemBuilder: (context, index) {
                 final msg = widget.meeting.messages[index];
@@ -245,7 +165,7 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
                             : Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      constraints: const BoxConstraints(maxWidth: 640),
+                      constraints: BoxConstraints(maxWidth: isWide ? 800 : 640),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -268,9 +188,37 @@ class _MeetingDetailPageState extends State<MeetingDetailPage> {
               },
             ),
           ),
-          SafeArea(child: _AudioPlayerBar(player: _player)),
-        ],
-      ),
+        );
+        
+        final audioPlayer = SafeArea(child: _AudioPlayerBar(player: _player));
+        
+        if (isWide) {
+          return Scaffold(
+            appBar: appBar,
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Column(
+                  children: [
+                    messagesList,
+                    audioPlayer,
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        
+        return Scaffold(
+          appBar: appBar,
+          body: Column(
+            children: [
+              messagesList,
+              audioPlayer,
+            ],
+          ),
+        );
+      },
     );
   }
 }

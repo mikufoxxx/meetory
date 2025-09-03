@@ -1,7 +1,7 @@
 name: meetory
 description: "Meetory is a wonderful meeting record application."
 publish_to: 'none'
-version: 1.0.0
+version: 1.1.0
 
 environment:
   sdk: ^3.6.1
@@ -31,7 +31,11 @@ dependencies:
   # Local data storage
   shared_preferences: ^2.3.2
   # Path manipulation
-  path: ^1.9.0 
+  path: ^1.9.0
+  # Archive extraction for model files
+  archive: ^3.6.1
+  # File picker for local import
+  file_picker: ^8.1.4 
 
 dev_dependencies:
   flutter_test:
@@ -41,9 +45,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    # Root models folder
+    # Only include empty model directories structure, not the actual model files
     - assets/models/
-    # Explicit subtrees to ensure nested directories are bundled
     - assets/models/asr/
-    - assets/models/asr/sherpa-onnx-streaming-zipformer-zh-fp16-2025-06-30/
     - assets/models/speaker_diarization/
+    - assets/models/VAD/

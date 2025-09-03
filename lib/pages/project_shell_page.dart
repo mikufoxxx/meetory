@@ -20,16 +20,168 @@ class _ProjectShellPageState extends State<ProjectShellPage> {
       ProjectKnowledgePage(project: widget.project),
     ];
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.project.name)),
-      body: pages[_index],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.history), label: '会议历史'),
-          NavigationDestination(icon: Icon(Icons.library_books_outlined), label: '文档/知识库'),
-        ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 1000;
+        
+        final appBar = AppBar(title: Text(widget.project.name));
+        
+        final body = Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: pages[_index],
+          ),
+        );
+        
+        if (isWide) {
+          return Scaffold(
+            appBar: appBar,
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: _index,
+                  onDestinationSelected: (i) => setState(() => _index = i),
+                  labelType: NavigationRailLabelType.all,
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.history_outlined),
+                      selectedIcon: Icon(Icons.history),
+                      label: Text('会议历史'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.library_books_outlined),
+                      selectedIcon: Icon(Icons.library_books),
+                      label: Text('文档/知识库'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: body),
+              ],
+            ),
+          );
+        }
+        
+        return Scaffold(
+          appBar: appBar,
+          body: body,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (i) => setState(() => _index = i),
+            destinations: const [
+              NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: '会议历史'),
+              NavigationDestination(icon: Icon(Icons.library_books_outlined), selectedIcon: Icon(Icons.library_books), label: '文档/知识库'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MeetingCard extends StatelessWidget {
+  final dynamic meeting;
+  const _MeetingCard({required this.meeting});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) => MeetingDetailPage(meeting: meeting),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+          ),
+        ),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.videocam,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      meeting.title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.outline,
+                    size: 14,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(width: 3),
+                  Expanded(
+                    child: Text(
+                      '${meeting.time.year}-${meeting.time.month.toString().padLeft(2, '0')}-${meeting.time.day.toString().padLeft(2, '0')} ${meeting.time.hour.toString().padLeft(2, '0')}:${meeting.time.minute.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (meeting.tags.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: meeting.tags.take(2).map<Widget>((tag) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        tag,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          fontSize: 10,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -62,42 +214,37 @@ class ProjectHistoryPage extends StatelessWidget {
       );
     }
     
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: meetings.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final m = meetings[index];
-        return Card(
-          child: ListTile(
-            leading: Icon(
-              Icons.videocam,
-              color: Theme.of(context).colorScheme.primary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 800;
+        
+        if (isWide) {
+          // 平板/桌面版本：使用网格布局
+          return GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: constraints.maxWidth > 1200 ? 3 : 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 2.8,
             ),
-            title: Text(m.title),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${m.time.year}-${m.time.month.toString().padLeft(2, '0')}-${m.time.day.toString().padLeft(2, '0')} ${m.time.hour.toString().padLeft(2, '0')}:${m.time.minute.toString().padLeft(2, '0')}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                if (m.tags.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '标签：${m.tags.join(', ')}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => MeetingDetailPage(meeting: m)),
-            ),
-          ),
+            itemCount: meetings.length,
+            itemBuilder: (context, index) {
+              final m = meetings[index];
+              return _MeetingCard(meeting: m);
+            },
+          );
+        }
+        
+        // 手机版本：使用列表布局
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: meetings.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final m = meetings[index];
+            return _MeetingCard(meeting: m);
+          },
         );
       },
     );

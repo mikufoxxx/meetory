@@ -138,13 +138,26 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
     final roomName = 'Meetory #${DateTime.now().millisecondsSinceEpoch % 10000}';
     
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => MeetingRoomDetailPage(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => MeetingRoomDetailPage(
           roomName: roomName,
           host: '127.0.0.1',
           port: 3030,
           config: config,
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 1.0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
@@ -158,7 +171,22 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const UserManagementPage()),
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1.0, 0.0),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      )),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: const Duration(milliseconds: 300),
+                ),
               ).then((_) => _loadUsers());
             },
             icon: const Icon(Icons.people),
@@ -387,7 +415,22 @@ class _MeetingRoomConfigPageState extends State<MeetingRoomConfigPage> {
                           OutlinedButton.icon(
                             onPressed: () {
                               Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const UserManagementPage()),
+                                PageRouteBuilder(
+                                  pageBuilder: (context, animation, secondaryAnimation) => const UserManagementPage(),
+                                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                    return SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(1.0, 0.0),
+                                        end: Offset.zero,
+                                      ).animate(CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOutCubic,
+                                      )),
+                                      child: child,
+                                    );
+                                  },
+                                  transitionDuration: const Duration(milliseconds: 300),
+                                ),
                               ).then((_) => _loadUsers());
                             },
                             icon: const Icon(Icons.person_add),

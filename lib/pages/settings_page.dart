@@ -80,34 +80,60 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
-      body: ListView(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('当前版本'),
-            subtitle: Text(_currentBuild == null
-                ? (_currentVersion ?? '读取中...')
-                : '${_currentVersion ?? '读取中...'} (+$_currentBuild)'),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 1000;
+        
+        final appBar = AppBar(title: const Text('设置'));
+        
+        final settingsContent = Card(
+          margin: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('当前版本'),
+                subtitle: Text(_currentBuild == null
+                    ? (_currentVersion ?? '读取中...')
+                    : '${_currentVersion ?? '读取中...'} (+$_currentBuild)'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.system_update_outlined),
+                title: const Text('检查更新'),
+                subtitle: Text(_latestTag == null ? '访问 GitHub Releases 获取最新版本' : '最新：$_latestTag'),
+                trailing: _checking
+                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                    : null,
+                onTap: _checking ? null : _checkUpdate,
+              ),
+              const Divider(height: 1),
+              const ListTile(
+                leading: Icon(Icons.download_done_outlined),
+                title: Text('模型说明'),
+                subtitle: Text('ASR 模型已内置，进入会议室时自动初始化并显示进度提示，无需手动配置'),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const Icon(Icons.system_update_outlined),
-            title: const Text('检查更新'),
-            subtitle: Text(_latestTag == null ? '访问 GitHub Releases 获取最新版本' : '最新：$_latestTag'),
-            trailing: _checking
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                : null,
-            onTap: _checking ? null : _checkUpdate,
-          ),
-          const Divider(),
-          const ListTile(
-            leading: Icon(Icons.download_done_outlined),
-            title: Text('模型说明'),
-            subtitle: Text('ASR 模型已内置，进入会议室时自动初始化并显示进度提示，无需手动配置'),
-          ),
-        ],
-      ),
+        );
+        
+        if (isWide) {
+          return Scaffold(
+            appBar: appBar,
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: settingsContent,
+              ),
+            ),
+          );
+        }
+        
+        return Scaffold(
+          appBar: appBar,
+          body: settingsContent,
+        );
+      },
     );
   }
 }
